@@ -39,21 +39,34 @@ namespace FlickrMetadataSync
                             caption = bitmapMetadata.Comment;
                         }
 
-                        if (bitmapMetadata.GetQuery(DATE_TAKEN_QUERY) != null)
+                        if (bitmapMetadata.GetQuery(DATE_TAKEN_QUERY) != null && !bitmapMetadata.GetQuery(DATE_TAKEN_QUERY).ToString().StartsWith("0000"))
                         {
-                            string rawDate = bitmapMetadata.GetQuery(DATE_TAKEN_QUERY).ToString();
-                            string[] tokens = rawDate.Split(':', ' ');
-                            int year = int.Parse(tokens[0]);
-                            int month = int.Parse(tokens[1]);
-                            int day = int.Parse(tokens[2]);
-                            int hour = int.Parse(tokens[3]);
-                            int minute = int.Parse(tokens[4]);
-                            int second = int.Parse(tokens[5]);
-                            dateTaken = new DateTime(year, month, day, hour, minute, second);
+                            try
+                            {
+                                string rawDate = bitmapMetadata.GetQuery(DATE_TAKEN_QUERY).ToString();
+                                string[] tokens = rawDate.Split(':', ' ');
+                                int year = int.Parse(tokens[0]);
+                                int month = int.Parse(tokens[1]);
+                                int day = int.Parse(tokens[2]);
+                                int hour = int.Parse(tokens[3]);
+                                int minute = int.Parse(tokens[4]);
+                                int second = int.Parse(tokens[5]);
+                                dateTaken = new DateTime(year, month, day, hour, minute, second);
+                            }
+                            catch
+                            {
+                                dateTaken = Convert.ToDateTime(bitmapMetadata.DateTaken);
+                            }
                         }
-                        else if (bitmapMetadata.DateTaken != null)
+                        else
                         {
-                            dateTaken = Convert.ToDateTime(bitmapMetadata.DateTaken);
+                            try
+                            {
+                                if (bitmapMetadata.DateTaken != null)
+                                    dateTaken = Convert.ToDateTime(bitmapMetadata.DateTaken);
+                            }
+                            catch { } //this is to help with some weird picture files that complain with a 
+                            //"object must be initialized" error.
                         }
 
                         tags = new StringCollection();
