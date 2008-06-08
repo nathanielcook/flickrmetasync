@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FlickrMetadataSync.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="flickrAppKey" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Insert your flickr app key here.</Value>
+    </Setting>
+    <Setting Name="flickrSharedSecret" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Insert your flickr shared secret here.</Value>
+    </Setting>
+    <Setting Name="registryPath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Software\\heavycrag\\FlickrMetadataSync\\Settings</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
