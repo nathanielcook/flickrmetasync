@@ -136,7 +136,7 @@ namespace FlickrMetadataSync
                             picture.Save();
 
                             //flickr BEGIN----------------------------------------------------------------------
-                            string setName = selectedNodeName;
+                            string setName = pictureFileName.Replace(Path.GetDirectoryName(Path.GetDirectoryName(pictureFileName)), "").Replace(Path.GetFileName(pictureFileName),"").Replace("\\","");
 
                             for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                             {
@@ -178,7 +178,7 @@ namespace FlickrMetadataSync
                             //IF IT'S THE CURRENT PICTURE, REFRESH IT---------------------------
                             if (currentContent.flickrID.Equals(picture.flickrID))
                             {
-                                mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                                mergeLocalInUI(Path.GetFileName(currentContent.filename));
                             }
                         }
                         allTags.Remove(oldTag);
@@ -773,7 +773,10 @@ namespace FlickrMetadataSync
 
                 //load tags
                 foreach (String tag in currentPicture.tags)
-                    lstTags.Items.Add(tag);
+                {
+                    if (tag.Length > 0)
+                        lstTags.Items.Add(tag);
+                }
 
                 //load gps data
                 if (currentPicture.gpsLatitude.HasValue)
@@ -1025,21 +1028,30 @@ namespace FlickrMetadataSync
                             lstAllTags.Items.Add(tag, tag, 0);
                         }
                         if (tag != copyOfTag)
-                            throw new Exception("Flickr capitalization doesn't match local capitalization");
-
-                        //update tagreader tags and alltags
-                        addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
-                        if (tagReader.IsBusy)
                         {
-                            addTagIfNotAlreadyThere(tag, currentPicture, allTags);
+                            //throw new Exception("Flickr capitalization doesn't match local capitalization");
+                            MessageBox.Show(string.Format("Flickr capitalization for tag \"{0}\" doesn't match local capitalization. Tags not merged.", tag));
+
+                            ListViewItem item = new ListViewItem(tag);
+                            item.ForeColor = Color.Red;
+                            lstTags.Items.Add(item);
                         }
+                        else
+                        {
+                            //update tagreader tags and alltags
+                            addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
+                            if (tagReader.IsBusy)
+                            {
+                                addTagIfNotAlreadyThere(tag, currentPicture, allTags);
+                            }
 
-                        currentPicture.tags.Add(tag);
-                        localUnsavedChanges = true;
+                            currentPicture.tags.Add(tag);
+                            localUnsavedChanges = true;
 
-                        ListViewItem item = new ListViewItem(tag);
-                        item.ForeColor = Color.Cyan;
-                        lstTags.Items.Add(item);
+                            ListViewItem item = new ListViewItem(tag);
+                            item.ForeColor = Color.Cyan;
+                            lstTags.Items.Add(item);
+                        }
                     }
                 }
 
@@ -1147,12 +1159,19 @@ namespace FlickrMetadataSync
                 Picture picture = new Picture(file);
                 foreach (String tag in picture.tags)
                 {
-                    // if not already in tagreader tags (might have been added on a txtTag_KeyDown by the user)
-                    addTagIfNotAlreadyThere(tag, picture, tagReaderTags);
-
-                    if (tagReaderTags.GetValues(tag) == null)
+                    if (tag.Length > 0)
                     {
-                        newlyScannedTags.Add(tag);
+                        // if not already in tagreader tags (might have been added on a txtTag_KeyDown by the user)
+                        addTagIfNotAlreadyThere(tag, picture, tagReaderTags);
+
+                        if (tagReaderTags.GetValues(tag) == null)
+                        {
+                            newlyScannedTags.Add(tag);
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("zero length tag");
                     }
                 }
 
@@ -1219,14 +1238,23 @@ namespace FlickrMetadataSync
         {
             if (MessageBox.Show("Are you sure? This will take place immediately on flickr too.", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
             {
-                foreach (ListViewItem item in pictureList.Items)
+                try
                 {
-                    Picture picture = new Picture(Path.Combine(setList.SelectedNode.Name, item.Text));
-                    picture.dateTaken = calDateTaken.SelectionStart;
-                    picture.Save();
+                    Cursor.Current = Cursors.WaitCursor;
 
-                    picture.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(picture.filename)];
-                    flickr.PhotosSetDates(picture.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                    foreach (ListViewItem item in pictureList.Items)
+                    {
+                        Picture picture = new Picture(Path.Combine(setList.SelectedNode.Name, item.Text));
+                        picture.dateTaken = calDateTaken.SelectionStart;
+                        picture.Save();
+
+                        picture.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(picture.filename)];
+                        flickr.PhotosSetDates(picture.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                    }
+                }
+                finally
+                {
+                    Cursor.Current = Cursors.Default;
                 }
             }
         }

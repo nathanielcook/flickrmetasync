@@ -30,7 +30,7 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
@@ -97,7 +97,7 @@ namespace FlickrMetadataSync
             this.pictureList.Location = new System.Drawing.Point(292, 0);
             this.pictureList.Name = "pictureList";
             this.pictureList.Size = new System.Drawing.Size(419, 128);
-            this.pictureList.TabIndex = 6;
+            this.pictureList.TabIndex = 0;
             this.pictureList.UseCompatibleStateImageBehavior = false;
             // 
             // mnuSelected
@@ -126,11 +126,11 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem2});
             this.lstTags.Location = new System.Drawing.Point(292, 134);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 137);
-            this.lstTags.TabIndex = 7;
+            this.lstTags.TabIndex = 2;
             this.lstTags.UseCompatibleStateImageBehavior = false;
             this.lstTags.View = System.Windows.Forms.View.List;
             // 
@@ -176,7 +176,7 @@ namespace FlickrMetadataSync
             this.txtTag.Location = new System.Drawing.Point(292, 277);
             this.txtTag.Name = "txtTag";
             this.txtTag.Size = new System.Drawing.Size(158, 20);
-            this.txtTag.TabIndex = 11;
+            this.txtTag.TabIndex = 3;
             // 
             // btnAddTagToWholeSet
             // 
@@ -185,11 +185,10 @@ namespace FlickrMetadataSync
             this.btnAddTagToWholeSet.Location = new System.Drawing.Point(292, 306);
             this.btnAddTagToWholeSet.Name = "btnAddTagToWholeSet";
             this.btnAddTagToWholeSet.Size = new System.Drawing.Size(37, 23);
-            this.btnAddTagToWholeSet.TabIndex = 12;
+            this.btnAddTagToWholeSet.TabIndex = 4;
             this.btnAddTagToWholeSet.TabStop = false;
             this.btnAddTagToWholeSet.Text = "Add";
             this.btnAddTagToWholeSet.UseVisualStyleBackColor = true;
-            this.btnAddTagToWholeSet.Click += new System.EventHandler(this.btnAddTagToWholeSet_Click);
             // 
             // splitContainer1
             // 
@@ -215,7 +214,7 @@ namespace FlickrMetadataSync
             this.setList.Location = new System.Drawing.Point(0, 0);
             this.setList.Name = "setList";
             this.setList.Size = new System.Drawing.Size(287, 213);
-            this.setList.TabIndex = 5;
+            this.setList.TabIndex = 0;
             // 
             // lstAllTags
             // 
@@ -279,7 +278,7 @@ namespace FlickrMetadataSync
             this.calDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.calDateTaken.Location = new System.Drawing.Point(714, 0);
             this.calDateTaken.Name = "calDateTaken";
-            this.calDateTaken.TabIndex = 19;
+            this.calDateTaken.TabIndex = 1;
             this.calDateTaken.TabStop = false;
             // 
             // flickrGopher
@@ -311,7 +310,7 @@ namespace FlickrMetadataSync
             this.btnRemoveTagFromWholeSet.Location = new System.Drawing.Point(395, 306);
             this.btnRemoveTagFromWholeSet.Name = "btnRemoveTagFromWholeSet";
             this.btnRemoveTagFromWholeSet.Size = new System.Drawing.Size(55, 23);
-            this.btnRemoveTagFromWholeSet.TabIndex = 25;
+            this.btnRemoveTagFromWholeSet.TabIndex = 5;
             this.btnRemoveTagFromWholeSet.TabStop = false;
             this.btnRemoveTagFromWholeSet.Text = "Remove";
             this.btnRemoveTagFromWholeSet.UseVisualStyleBackColor = true;
@@ -337,7 +336,7 @@ namespace FlickrMetadataSync
             this.axWMP.Name = "axWMP";
             this.axWMP.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axWMP.OcxState")));
             this.axWMP.Size = new System.Drawing.Size(436, 172);
-            this.axWMP.TabIndex = 27;
+            this.axWMP.TabIndex = 6;
             this.axWMP.Visible = false;
             // 
             // Main
