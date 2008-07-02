@@ -291,7 +291,6 @@ namespace FlickrMetadataSync
                     removeTagFromLstAllTagsIfNeeded(item.Text);
 
                     currentPicture.tags.Remove(item.Text);
-                    lstTags.Items.Remove(item);
                     currentPicture.Save();
                 }
 
@@ -300,6 +299,8 @@ namespace FlickrMetadataSync
                     currentContent.flickrTags.Remove(item.Text);
                     setFlickrTags(currentContent);
                 }
+
+                lstTags.Items.Remove(item);
                 pictureList.Select();
             }
             else if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right)
@@ -739,15 +740,15 @@ namespace FlickrMetadataSync
                 //just use the file created date as the date taken.
                 calDateTaken.SetDate(File.GetCreationTime(fullFilePath));
 
+                //load video
                 axWMP.URL = fullFilePath;
+
                 axWMP.Visible = true;
                 pictureBox.Visible = false;
             }
             else
             {
                 axWMP.Ctlcontrols.stop();
-                axWMP.Visible = false;
-                pictureBox.Visible = true;
 
                 currentContent = new Picture(fullFilePath);
                 Picture currentPicture = ((Picture)currentContent);
@@ -756,6 +757,9 @@ namespace FlickrMetadataSync
 
                 //load picture
                 pictureBox.ImageLocation = currentPicture.filename;
+
+                axWMP.Visible = false;
+                pictureBox.Visible = true;
 
                 //load caption
                 txtPictureCaption.Text = currentPicture.caption;
