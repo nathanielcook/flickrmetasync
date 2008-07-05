@@ -19,12 +19,13 @@ namespace FlickrMetadataSync
 {
     public partial class Main : Form
     {
-        private string flickrUserName;
+        //from the registry settings
+        private static string flickrUserName;
+        private static string localFlickrDirectory;
+        private static string lastAllTagsScanDate;
 
         private static string appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "FlickrMetadataSync\\");
         private static string allTagsFilePath = Path.Combine(appDataFolder, "tags.xml");
-
-        private static string localFlickrDirectory;
 
         private static NameValueCollection allTags = new NameValueCollection(100);
         private static NameValueCollection tagReaderTags = new NameValueCollection(100);
@@ -74,6 +75,9 @@ namespace FlickrMetadataSync
             this.changeThisTagMenuItem.Click += new EventHandler(changeThisTagMenuItem_Click);
             this.addTagToSelectedMenuItem.Click += new EventHandler(addTagToSelectedMenuItem_Click);
             this.removeTagFromSelectedToolStripMenuItem.Click += new EventHandler(removeTagFromSelectedMenuItem_Click);
+            this.makePublicToolStripMenuItem.Click += new EventHandler(makePublicToolStripMenuItem_Click);
+            this.makePrivateToolStripMenuItem.Click += new EventHandler(makePrivateToolStripMenuItem_Click);
+            this.renameThisSetToolStripMenuItem.Click += new EventHandler(renameThisSetToolStripMenuItem_Click);
             this.btnAddTagToWholeSet.Click += new EventHandler(btnAddTagToWholeSet_Click);
             this.lstTags.SelectedIndexChanged += new EventHandler(lstTags_SelectedIndexChanged);
 
@@ -93,9 +97,80 @@ namespace FlickrMetadataSync
 
             flickr.HttpTimeout = 180000; //wait up to three minutes to get photosets
 
-            //begin reading tags in the background
-            //leave this as the last line in Main()
-            tagReader.RunWorkerAsync();
+            if (lastAllTagsScanDate == "" || DateTime.Now.Subtract(DateTime.Parse(lastAllTagsScanDate)).Days > 3)
+            {
+                //if it's been more than 3 days since the last all tags scan
+                //begin reading tags in the background
+                //leave this as the last line in Main()
+                tagReader.RunWorkerAsync();
+            }
+        }
+
+        void renameThisSetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!setList.SelectedNode.FullPath.Equals(setList.TopNode.FullPath))
+            {
+                string setID = currentSetId;
+                string oldSetName = currentSetName;
+
+                string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, "");
+
+                if (newSetName.Length > 0 && MessageBox.Show(string.Format("Are you sure you want to change \"{0}\" to \"{1}\"?", oldSetName, newSetName), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+                        Directory.Move(Path.Combine(localFlickrDirectory, oldSetName), Path.Combine(localFlickrDirectory, newSetName));
+                        flickr.PhotosetsEditMeta(setID, newSetName, flickr.PhotosetsGetInfo(setID).Description);
+                        populateTreeView();
+                        photosets = null;
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
+        }
+
+        void makePublicToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (pictureList.SelectedItems.Count > 0)
+            {
+                if (MessageBox.Show("Are you sure you want to make the selected photos public?", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        changeVisibility(1, pictureList.SelectedItems);
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
+        }
+
+        void makePrivateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (pictureList.SelectedItems.Count > 0)
+            {
+                if (MessageBox.Show("Are you sure you want to make the selected photos private?", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        changeVisibility(0, pictureList.SelectedItems);
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
         }
 
         void lstTags_SelectedIndexChanged(object sender, EventArgs e)
@@ -117,12 +192,17 @@ namespace FlickrMetadataSync
 
                 if (newTag.Length > 0 && MessageBox.Show(string.Format("Are you sure you want to change \"{0}\" to \"{1}\"?", oldTag, newTag), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
+
+                    //need some code here to make sure newTag <> oldTag
+
                     try
                     {
                         Cursor.Current = Cursors.WaitCursor;
 
                         foreach (string pictureFileName in allTags.GetValues(oldTag))
                         {
+                            //need some code here to make sure that newTag isn't already part of this picture
+
                             //add this filename to allTags under the new key (tag)
                             allTags.Add(newTag, pictureFileName);
 
@@ -136,7 +216,7 @@ namespace FlickrMetadataSync
                             picture.Save();
 
                             //flickr BEGIN----------------------------------------------------------------------
-                            string setName = pictureFileName.Replace(Path.GetDirectoryName(Path.GetDirectoryName(pictureFileName)), "").Replace(Path.GetFileName(pictureFileName),"").Replace("\\","");
+                            string setName = pictureFileName.Replace(Path.GetDirectoryName(Path.GetDirectoryName(pictureFileName)), "").Replace(Path.GetFileName(pictureFileName), "").Replace("\\", "");
 
                             for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                             {
@@ -188,7 +268,13 @@ namespace FlickrMetadataSync
 
                         //REMOVE OLD FROM THE LISTBOX AND ADD NEW TAG TO LISTBOX
                         lstAllTags.Items.Remove(item);
-                        lstAllTags.Items.Add(newTag, newTag, 0);
+
+                        if (!containsTag(lstAllTags, ref newTag))
+                        {
+                            lstAllTags.Items.Add(newTag, newTag, 0);
+                        }
+
+                        saveAllTagsToDisk();
                     }
                     finally
                     {
@@ -196,6 +282,8 @@ namespace FlickrMetadataSync
                     }
                 } // are you sure you want to change this tag?
             } //if (lstAllTags.SelectedItems.Count > 0)
+
+            pictureList.Select();
         }
 
         void lstAllTags_KeyDown(object sender, KeyEventArgs e)
@@ -387,6 +475,9 @@ namespace FlickrMetadataSync
                             //now actually add the tag to the picture
                             currentPicture.tags.Add(tag);
                             currentPicture.Save();
+
+                            saveAllTagsToDisk();
+
                         } //if (currentContent is Picture)
 
                         ListViewItem item = new ListViewItem(tag);
@@ -430,6 +521,12 @@ namespace FlickrMetadataSync
             else if (e.KeyCode == Keys.OemQuotes && e.Shift == true)
             {
                 //don't allow double quotes in tags
+                e.SuppressKeyPress = true;
+            }
+            else if (e.KeyCode == Keys.Back && txtTag.Text.Length == 1 && txtTag.SelectionStart == 1)
+            {
+                txtTag.Text = "";
+                pictureList.Select();
                 e.SuppressKeyPress = true;
             }
         }
@@ -540,6 +637,7 @@ namespace FlickrMetadataSync
             {
                 localFlickrDirectory = key.GetValue("localFlickrDirectory", "").ToString();
                 flickrUserName = key.GetValue("flickrUserName", "").ToString();
+                lastAllTagsScanDate = key.GetValue("lastAllTagsScanDate", "").ToString();
             }
 
             if (localFlickrDirectory == "")
@@ -568,6 +666,8 @@ namespace FlickrMetadataSync
 
         private void populateTreeView()
         {
+            setList.Nodes.Clear();
+
             TreeNode mainNode = setList.Nodes.Add(localFlickrDirectory.Replace(Path.GetDirectoryName(localFlickrDirectory), "").Replace("\\", "").Trim());
             mainNode.Name = localFlickrDirectory;
 
@@ -732,6 +832,7 @@ namespace FlickrMetadataSync
             string geoTag = "Geotag: ";
             lblGeotag.Text = geoTag;
             lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Regular);
+            lblVisibility.Text = "";
 
             if (isVideo(selectedItemText))
             {
@@ -1016,6 +1117,17 @@ namespace FlickrMetadataSync
                     localUnsavedChanges = true;
                 }
 
+                if (currentPicture.flickrIsPublic == 1)
+                {
+                    lblVisibility.Text = "Public";
+                    lblVisibility.Font = new Font(lblVisibility.Font, FontStyle.Bold);
+                }
+                else
+                {
+                    lblVisibility.Text = "Private";
+                    lblVisibility.Font = new Font(lblVisibility.Font, FontStyle.Regular);
+                }
+
                 //tags (merge)
                 foreach (string tag in currentPicture.flickrTags)
                 {
@@ -1039,10 +1151,10 @@ namespace FlickrMetadataSync
                         else
                         {
                             //update tagreader tags and alltags
-                            addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
+                            addTagIfNotAlreadyThere(tag, currentPicture, allTags);
                             if (tagReader.IsBusy)
                             {
-                                addTagIfNotAlreadyThere(tag, currentPicture, allTags);
+                                addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
                             }
 
                             currentPicture.tags.Add(tag);
@@ -1078,11 +1190,13 @@ namespace FlickrMetadataSync
                 if (localUnsavedChanges)
                 {
                     currentPicture.Save();
+                    saveAllTagsToDisk();
                 }
 
                 if (saveFlickrTags || localUnsavedChanges)
                 {
-                    mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                    if (pictureList.SelectedItems.Count > 0)
+                        mergeLocalInUI(pictureList.SelectedItems[0].Text);
                 }
                 else
                     currentPicture.flickrMergedInUI = true;
@@ -1199,6 +1313,16 @@ namespace FlickrMetadataSync
             allTags = tmpNVC;
 
             saveAllTagsToDisk();
+
+            //saved lastAllTagsScanDate to the registry
+            RegistryKey key = Registry.CurrentUser.OpenSubKey(Settings.Default.registryPath, true);
+            if (key == null)
+            {
+                key = Registry.CurrentUser.CreateSubKey(Settings.Default.registryPath, RegistryKeyPermissionCheck.ReadWriteSubTree);
+            }
+
+            lastAllTagsScanDate = DateTime.Now.ToLongDateString();
+            key.SetValue("lastAllTagsScanDate", lastAllTagsScanDate);
         }
 
         private static void saveAllTagsToDisk()
@@ -1276,6 +1400,7 @@ namespace FlickrMetadataSync
                     Cursor.Current = Cursors.Default;
                 }
             }
+            pictureList.Select();
         }
 
         void addTagToSelectedMenuItem_Click(object sender, EventArgs e)
@@ -1330,6 +1455,8 @@ namespace FlickrMetadataSync
                 }
                 //local END-------------------------------------------------------------------------
 
+                saveAllTagsToDisk();
+
                 //flickr BEGIN----------------------------------------------------------------------
                 content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
 
@@ -1383,6 +1510,7 @@ namespace FlickrMetadataSync
                     Cursor.Current = Cursors.Default;
                 }
             }
+            pictureList.Select();
         }
 
         void removeTagFromSelectedMenuItem_Click(object sender, EventArgs e)
@@ -1402,6 +1530,49 @@ namespace FlickrMetadataSync
                     finally
                     {
                         Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
+        }
+
+        private void changeVisibility(int isPublic, ICollection items)
+        {
+            foreach (ListViewItem item in items)
+            {
+                string fullFilePath = Path.Combine(setList.SelectedNode.Name, item.Text);
+
+                Content content;
+                if (isVideo(item.Text))
+                    content = new Video(fullFilePath);
+                else
+                    content = new Picture(fullFilePath);
+
+                content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+
+                if (picturesDictionary.Count == 0)
+                {
+                    //this whole set is not in flickr. Do nothing. Just ignore flickr.
+                }
+                else if (content.flickrID == null)
+                {
+                    //the set is in flickr, but this particular picture isn't. Throw an exception.
+                    throw new Exception("Set is in flickr, but picture isn't?");
+                }
+                else
+                {
+                    PhotoInfo photoInfo = flickr.PhotosGetInfo(content.flickrID);
+
+                    flickr.PhotosSetPerms(content.flickrID, isPublic, photoInfo.Visibility.IsFriend, photoInfo.Visibility.IsFamily, photoInfo.Permissions.PermissionComment, photoInfo.Permissions.PermissionAddMeta);
+                }
+                //flickr END-------------------------------------------------------------------------
+
+                if (pictureList.SelectedItems.Count > 0)
+                {
+                    mergeLocalInUI(pictureList.SelectedItems[0].Text);
+
+                    if (currentContent.flickrLoaded)
+                    {
+                        mergeFlickrInUI();
                     }
                 }
             }

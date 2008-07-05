@@ -24,6 +24,8 @@ namespace FlickrMetadataSync
         public bool flickrLoaded;
         public bool flickrMergedInUI;
 
+        public int flickrIsPublic;
+
         public void loadFlickrInfo(PhotoInfo photoInfo)
         {
             if (Path.GetFileNameWithoutExtension(filename).Equals(photoInfo.Title))
@@ -38,8 +40,10 @@ namespace FlickrMetadataSync
                     flickrGpsLatitude = photoInfo.Location.Latitude;
                     flickrGpsLongitude = photoInfo.Location.Longitude;
                 }
-                flickrTags = new StringCollection();
 
+                flickrIsPublic = photoInfo.Visibility.IsPublic;
+
+                flickrTags = new StringCollection();
                 for (int i = 0; i < photoInfo.Tags.TagCollection.Length; i++)
                 {
                     flickrTags.Add(photoInfo.Tags.TagCollection[i].Raw);
