@@ -30,7 +30,7 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
@@ -39,6 +39,8 @@ namespace FlickrMetadataSync
             this.mnuSelected = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addTagToSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeTagFromSelectedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.makePublicToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.makePrivateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstTags = new System.Windows.Forms.ListView();
             this.lblGeotag = new System.Windows.Forms.Label();
             this.txtPictureCaption = new System.Windows.Forms.TextBox();
@@ -48,6 +50,8 @@ namespace FlickrMetadataSync
             this.btnAddTagToWholeSet = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.setList = new System.Windows.Forms.TreeView();
+            this.mnuSets = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.renameThisSetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstAllTags = new System.Windows.Forms.ListView();
             this.mnuAllTags = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.changeThisTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -62,19 +66,17 @@ namespace FlickrMetadataSync
             this.btnRemoveTagFromWholeSet = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.axWMP = new AxWMPLib.AxWindowsMediaPlayer();
-            this.makePublicToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lblVisibility = new System.Windows.Forms.Label();
-            this.makePrivateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuSets = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.renameThisSetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.advancedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.refreshAllTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.mnuSelected.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.mnuSets.SuspendLayout();
             this.mnuAllTags.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).BeginInit();
-            this.mnuSets.SuspendLayout();
             this.SuspendLayout();
             // 
             // timer1
@@ -128,13 +130,25 @@ namespace FlickrMetadataSync
             this.removeTagFromSelectedToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.removeTagFromSelectedToolStripMenuItem.Text = "Delete Tag from Selected";
             // 
+            // makePublicToolStripMenuItem
+            // 
+            this.makePublicToolStripMenuItem.Name = "makePublicToolStripMenuItem";
+            this.makePublicToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.makePublicToolStripMenuItem.Text = "Make Selected Public";
+            // 
+            // makePrivateToolStripMenuItem
+            // 
+            this.makePrivateToolStripMenuItem.Name = "makePrivateToolStripMenuItem";
+            this.makePrivateToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.makePrivateToolStripMenuItem.Text = "Make Selected Private";
+            // 
             // lstTags
             // 
             this.lstTags.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3});
+            listViewItem1});
             this.lstTags.Location = new System.Drawing.Point(292, 134);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 121);
@@ -225,6 +239,19 @@ namespace FlickrMetadataSync
             this.setList.Size = new System.Drawing.Size(287, 204);
             this.setList.TabIndex = 0;
             // 
+            // mnuSets
+            // 
+            this.mnuSets.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.renameThisSetToolStripMenuItem});
+            this.mnuSets.Name = "mnuSets";
+            this.mnuSets.Size = new System.Drawing.Size(155, 26);
+            // 
+            // renameThisSetToolStripMenuItem
+            // 
+            this.renameThisSetToolStripMenuItem.Name = "renameThisSetToolStripMenuItem";
+            this.renameThisSetToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.renameThisSetToolStripMenuItem.Text = "Rename This Set";
+            // 
             // lstAllTags
             // 
             this.lstAllTags.ContextMenuStrip = this.mnuAllTags;
@@ -239,9 +266,10 @@ namespace FlickrMetadataSync
             // mnuAllTags
             // 
             this.mnuAllTags.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.changeThisTagMenuItem});
+            this.changeThisTagMenuItem,
+            this.advancedToolStripMenuItem});
             this.mnuAllTags.Name = "mnuTag";
-            this.mnuAllTags.Size = new System.Drawing.Size(153, 26);
+            this.mnuAllTags.Size = new System.Drawing.Size(153, 70);
             // 
             // changeThisTagMenuItem
             // 
@@ -348,12 +376,6 @@ namespace FlickrMetadataSync
             this.axWMP.TabIndex = 6;
             this.axWMP.Visible = false;
             // 
-            // makePublicToolStripMenuItem
-            // 
-            this.makePublicToolStripMenuItem.Name = "makePublicToolStripMenuItem";
-            this.makePublicToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.makePublicToolStripMenuItem.Text = "Make Selected Public";
-            // 
             // lblVisibility
             // 
             this.lblVisibility.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -365,24 +387,19 @@ namespace FlickrMetadataSync
             this.lblVisibility.Text = "Private";
             this.lblVisibility.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // makePrivateToolStripMenuItem
+            // advancedToolStripMenuItem
             // 
-            this.makePrivateToolStripMenuItem.Name = "makePrivateToolStripMenuItem";
-            this.makePrivateToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.makePrivateToolStripMenuItem.Text = "Make Selected Private";
+            this.advancedToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.refreshAllTagsToolStripMenuItem});
+            this.advancedToolStripMenuItem.Name = "advancedToolStripMenuItem";
+            this.advancedToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.advancedToolStripMenuItem.Text = "Advanced";
             // 
-            // mnuSets
+            // refreshAllTagsToolStripMenuItem
             // 
-            this.mnuSets.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.renameThisSetToolStripMenuItem});
-            this.mnuSets.Name = "mnuSets";
-            this.mnuSets.Size = new System.Drawing.Size(155, 26);
-            // 
-            // renameThisSetToolStripMenuItem
-            // 
-            this.renameThisSetToolStripMenuItem.Name = "renameThisSetToolStripMenuItem";
-            this.renameThisSetToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
-            this.renameThisSetToolStripMenuItem.Text = "Rename This Set";
+            this.refreshAllTagsToolStripMenuItem.Name = "refreshAllTagsToolStripMenuItem";
+            this.refreshAllTagsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.refreshAllTagsToolStripMenuItem.Text = "Refresh All Tags";
             // 
             // Main
             // 
@@ -416,9 +433,9 @@ namespace FlickrMetadataSync
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.ResumeLayout(false);
+            this.mnuSets.ResumeLayout(false);
             this.mnuAllTags.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).EndInit();
-            this.mnuSets.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -461,6 +478,8 @@ namespace FlickrMetadataSync
         private ToolStripMenuItem makePrivateToolStripMenuItem;
         private ContextMenuStrip mnuSets;
         private ToolStripMenuItem renameThisSetToolStripMenuItem;
+        private ToolStripMenuItem advancedToolStripMenuItem;
+        private ToolStripMenuItem refreshAllTagsToolStripMenuItem;
     }
 }
 
