@@ -80,6 +80,7 @@ namespace FlickrMetadataSync
             this.renameThisSetToolStripMenuItem.Click += new EventHandler(renameThisSetToolStripMenuItem_Click);
             this.btnAddTagToWholeSet.Click += new EventHandler(btnAddTagToWholeSet_Click);
             this.lstTags.SelectedIndexChanged += new EventHandler(lstTags_SelectedIndexChanged);
+            this.refreshAllTagsToolStripMenuItem.Click += new EventHandler(refreshAllTagsToolStripMenuItem_Click);
 
             //get flickr authorization token
             loadAuthToken();
@@ -104,6 +105,11 @@ namespace FlickrMetadataSync
                 //leave this as the last line in Main()
                 tagReader.RunWorkerAsync();
             }
+        }
+
+        void refreshAllTagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            tagReader.RunWorkerAsync();
         }
 
         void renameThisSetToolStripMenuItem_Click(object sender, EventArgs e)
@@ -274,7 +280,7 @@ namespace FlickrMetadataSync
                             lstAllTags.Items.Add(newTag, newTag, 0);
                         }
 
-                        saveAllTagsToDisk();
+                        saveAllTagsToDisk(allTags);
                     }
                     finally
                     {
@@ -476,7 +482,7 @@ namespace FlickrMetadataSync
                             currentPicture.tags.Add(tag);
                             currentPicture.Save();
 
-                            saveAllTagsToDisk();
+                            saveAllTagsToDisk(allTags);
 
                         } //if (currentContent is Picture)
 
@@ -936,7 +942,7 @@ namespace FlickrMetadataSync
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            saveAllTagsToDisk();
+            //saveAllTagsToDisk(); //not needed here. It's maintained on each tag add/delete.
             tagReader.CancelAsync();
         }
 
@@ -1094,8 +1100,8 @@ namespace FlickrMetadataSync
                 //gps data
                 if ((currentPicture.gpsLatitude.HasValue && currentPicture.flickrGpsLatitude.HasValue) || (currentPicture.gpsLongitude.HasValue && currentPicture.flickrGpsLongitude.HasValue))
                 {
-                    if ((currentPicture.gpsLatitude.HasValue && currentPicture.flickrGpsLatitude.HasValue && (Math.Round(currentPicture.gpsLatitude.Value, 1) != Math.Round(currentPicture.flickrGpsLatitude.Value, 1))) ||
-                    (currentPicture.gpsLongitude.HasValue && currentPicture.flickrGpsLongitude.HasValue && (Math.Round(currentPicture.gpsLongitude.Value, 1) != Math.Round(currentPicture.flickrGpsLongitude.Value, 1))))
+                    if ((currentPicture.gpsLatitude.HasValue && currentPicture.flickrGpsLatitude.HasValue && (Math.Abs(Math.Round(currentPicture.gpsLatitude.Value, 1) - Math.Round(currentPicture.flickrGpsLatitude.Value, 1)) > 0.1)) ||
+                    (currentPicture.gpsLongitude.HasValue && currentPicture.flickrGpsLongitude.HasValue && (Math.Abs(Math.Round(currentPicture.gpsLongitude.Value, 1) - Math.Round(currentPicture.flickrGpsLongitude.Value, 1)) > 0.1)))
                     {
                         lblGeotag.Text += "  CONFLICT w/flickr " + currentPicture.flickrGpsLatitude.Value + ", " + currentPicture.flickrGpsLongitude.Value;
                     }
@@ -1109,6 +1115,7 @@ namespace FlickrMetadataSync
                     currentPicture.flickrGpsLatitude = currentPicture.gpsLatitude;
                     currentPicture.flickrGpsLongitude = currentPicture.gpsLongitude;
                     flickr.PhotosGeoSetLocation(currentPicture.flickrID, currentPicture.flickrGpsLatitude.Value, currentPicture.flickrGpsLongitude.Value);
+                    lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
                 }
                 else if (currentPicture.flickrGpsLatitude.HasValue && currentPicture.flickrGpsLongitude.HasValue)
                 {
@@ -1142,6 +1149,7 @@ namespace FlickrMetadataSync
                         if (tag != copyOfTag)
                         {
                             //throw new Exception("Flickr capitalization doesn't match local capitalization");
+                            currentPicture.flickrMergedInUI = true; //to avoid a new message box every second
                             MessageBox.Show(string.Format("Flickr capitalization for tag \"{0}\" doesn't match local capitalization. Tags not merged.", tag));
 
                             ListViewItem item = new ListViewItem(tag);
@@ -1190,7 +1198,8 @@ namespace FlickrMetadataSync
                 if (localUnsavedChanges)
                 {
                     currentPicture.Save();
-                    saveAllTagsToDisk();
+                    lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
+                    saveAllTagsToDisk(allTags);
                 }
 
                 if (saveFlickrTags || localUnsavedChanges)
@@ -1294,25 +1303,7 @@ namespace FlickrMetadataSync
 
             tagReadingProgress = 0;
 
-            //sort the new NameValueCollection--------------------------------------------
-            string[] array = new string[tagReaderTags.AllKeys.Length];
-            tagReaderTags.AllKeys.CopyTo(array, 0);
-            Array.Sort(array, new CaseInsensitiveComparer());
-
-            NameValueCollection tmpNVC = new NameValueCollection(tagReaderTags.Count);
-            for (int i = 0; i < array.Length; i++)
-            {
-                foreach (string value in tagReaderTags.GetValues(array[i]))
-                {
-                    tmpNVC.Add(array[i], value);
-                }
-            }
-            //end sort--------------------------------------------------------------------
-
-            //now reassign allTags to be equal to the new list
-            allTags = tmpNVC;
-
-            saveAllTagsToDisk();
+            saveAllTagsToDisk(tagReaderTags);
 
             //saved lastAllTagsScanDate to the registry
             RegistryKey key = Registry.CurrentUser.OpenSubKey(Settings.Default.registryPath, true);
@@ -1325,10 +1316,28 @@ namespace FlickrMetadataSync
             key.SetValue("lastAllTagsScanDate", lastAllTagsScanDate);
         }
 
-        private static void saveAllTagsToDisk()
+        private static void saveAllTagsToDisk(NameValueCollection tagsToSave)
         {
             lock (lock_AllTagsSerialization)
             {
+                //sort the new NameValueCollection--------------------------------------------
+                string[] array = new string[tagsToSave.AllKeys.Length];
+                tagsToSave.AllKeys.CopyTo(array, 0);
+                Array.Sort(array, new CaseInsensitiveComparer());
+
+                NameValueCollection tmpNVC = new NameValueCollection(tagsToSave.Count);
+                for (int i = 0; i < array.Length; i++)
+                {
+                    foreach (string value in tagsToSave.GetValues(array[i]))
+                    {
+                        tmpNVC.Add(array[i], value);
+                    }
+                }
+
+                //now reassign allTags to be equal to the new list
+                allTags = tmpNVC;
+                //end sort--------------------------------------------------------------------
+
                 //write it to a file
                 using (FileStream fileStream = new FileStream(Path.Combine(appDataFolder, "tags.xml"), FileMode.Create))
                 {
@@ -1455,7 +1464,7 @@ namespace FlickrMetadataSync
                 }
                 //local END-------------------------------------------------------------------------
 
-                saveAllTagsToDisk();
+                saveAllTagsToDisk(allTags);
 
                 //flickr BEGIN----------------------------------------------------------------------
                 content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
