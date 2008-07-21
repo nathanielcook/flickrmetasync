@@ -262,7 +262,7 @@ namespace FlickrMetadataSync
                                 setFlickrTags(picture);
                             }
                             //IF IT'S THE CURRENT PICTURE, REFRESH IT---------------------------
-                            if (currentContent.flickrID.Equals(picture.flickrID))
+                            if (currentContent.flickrID != null && currentContent.flickrID.Equals(picture.flickrID))
                             {
                                 mergeLocalInUI(Path.GetFileName(currentContent.filename));
                             }
@@ -909,6 +909,10 @@ namespace FlickrMetadataSync
 
             if (photosets != null && !currentSetName.Equals(selectedNodeName))
             {
+                picturesDictionary.Clear();
+                currentSetName = "";
+                currentSetId = "";
+
                 for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                 {
                     if (photosets.PhotosetCollection[i].Title.Equals(selectedNodeName))
@@ -917,7 +921,6 @@ namespace FlickrMetadataSync
                         currentSetName = selectedNodeName;
 
                         Photo[] photosThisSet = flickr.PhotosetsGetPhotos(currentSetId).PhotoCollection;
-                        picturesDictionary.Clear();
                         for (int k = 0; k < photosThisSet.Length; k++)
                         {
                             //the "if" statement is to prevent an error if a picture is in a photoset more than once.
