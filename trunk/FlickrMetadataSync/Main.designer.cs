@@ -55,6 +55,8 @@ namespace FlickrMetadataSync
             this.lstAllTags = new System.Windows.Forms.ListView();
             this.mnuAllTags = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.changeThisTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.advancedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.refreshAllTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnSetDateTaken = new System.Windows.Forms.Button();
             this.lblDateTaken = new System.Windows.Forms.Label();
             this.btnSetDateTakenForWholeSet = new System.Windows.Forms.Button();
@@ -67,8 +69,9 @@ namespace FlickrMetadataSync
             this.label1 = new System.Windows.Forms.Label();
             this.axWMP = new AxWMPLib.AxWindowsMediaPlayer();
             this.lblVisibility = new System.Windows.Forms.Label();
-            this.advancedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.refreshAllTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblBrowse = new System.Windows.Forms.Label();
+            this.lnkPicture = new System.Windows.Forms.LinkLabel();
+            this.lnkSet = new System.Windows.Forms.LinkLabel();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.mnuSelected.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -92,7 +95,7 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox.Location = new System.Drawing.Point(456, 157);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(430, 156);
+            this.pictureBox.Size = new System.Drawing.Size(441, 184);
             this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox.TabIndex = 5;
             this.pictureBox.TabStop = false;
@@ -104,7 +107,7 @@ namespace FlickrMetadataSync
             this.pictureList.ContextMenuStrip = this.mnuSelected;
             this.pictureList.Location = new System.Drawing.Point(292, 0);
             this.pictureList.Name = "pictureList";
-            this.pictureList.Size = new System.Drawing.Size(413, 128);
+            this.pictureList.Size = new System.Drawing.Size(424, 128);
             this.pictureList.TabIndex = 0;
             this.pictureList.UseCompatibleStateImageBehavior = false;
             // 
@@ -151,7 +154,7 @@ namespace FlickrMetadataSync
             listViewItem1});
             this.lstTags.Location = new System.Drawing.Point(292, 134);
             this.lstTags.Name = "lstTags";
-            this.lstTags.Size = new System.Drawing.Size(158, 121);
+            this.lstTags.Size = new System.Drawing.Size(158, 149);
             this.lstTags.TabIndex = 2;
             this.lstTags.UseCompatibleStateImageBehavior = false;
             this.lstTags.View = System.Windows.Forms.View.List;
@@ -160,7 +163,7 @@ namespace FlickrMetadataSync
             // 
             this.lblGeotag.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblGeotag.AutoSize = true;
-            this.lblGeotag.Location = new System.Drawing.Point(453, 355);
+            this.lblGeotag.Location = new System.Drawing.Point(453, 383);
             this.lblGeotag.Name = "lblGeotag";
             this.lblGeotag.Size = new System.Drawing.Size(45, 13);
             this.lblGeotag.TabIndex = 8;
@@ -172,9 +175,9 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.txtPictureCaption.BackColor = System.Drawing.SystemColors.Control;
             this.txtPictureCaption.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtPictureCaption.Location = new System.Drawing.Point(457, 317);
+            this.txtPictureCaption.Location = new System.Drawing.Point(457, 345);
             this.txtPictureCaption.Name = "txtPictureCaption";
-            this.txtPictureCaption.Size = new System.Drawing.Size(429, 13);
+            this.txtPictureCaption.Size = new System.Drawing.Size(440, 13);
             this.txtPictureCaption.TabIndex = 9;
             // 
             // tagReader
@@ -185,7 +188,7 @@ namespace FlickrMetadataSync
             // tagReadingProgressBar
             // 
             this.tagReadingProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.tagReadingProgressBar.Location = new System.Drawing.Point(292, 345);
+            this.tagReadingProgressBar.Location = new System.Drawing.Point(292, 373);
             this.tagReadingProgressBar.Name = "tagReadingProgressBar";
             this.tagReadingProgressBar.Size = new System.Drawing.Size(158, 23);
             this.tagReadingProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
@@ -195,7 +198,7 @@ namespace FlickrMetadataSync
             // txtTag
             // 
             this.txtTag.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtTag.Location = new System.Drawing.Point(292, 261);
+            this.txtTag.Location = new System.Drawing.Point(292, 289);
             this.txtTag.Name = "txtTag";
             this.txtTag.Size = new System.Drawing.Size(158, 20);
             this.txtTag.TabIndex = 3;
@@ -204,7 +207,7 @@ namespace FlickrMetadataSync
             // 
             this.btnAddTagToWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnAddTagToWholeSet.Enabled = false;
-            this.btnAddTagToWholeSet.Location = new System.Drawing.Point(292, 290);
+            this.btnAddTagToWholeSet.Location = new System.Drawing.Point(292, 318);
             this.btnAddTagToWholeSet.Name = "btnAddTagToWholeSet";
             this.btnAddTagToWholeSet.Size = new System.Drawing.Size(37, 23);
             this.btnAddTagToWholeSet.TabIndex = 4;
@@ -226,8 +229,8 @@ namespace FlickrMetadataSync
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.lstAllTags);
-            this.splitContainer1.Size = new System.Drawing.Size(287, 371);
-            this.splitContainer1.SplitterDistance = 204;
+            this.splitContainer1.Size = new System.Drawing.Size(287, 399);
+            this.splitContainer1.SplitterDistance = 219;
             this.splitContainer1.TabIndex = 19;
             // 
             // setList
@@ -236,7 +239,7 @@ namespace FlickrMetadataSync
             this.setList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.setList.Location = new System.Drawing.Point(0, 0);
             this.setList.Name = "setList";
-            this.setList.Size = new System.Drawing.Size(287, 204);
+            this.setList.Size = new System.Drawing.Size(287, 219);
             this.setList.TabIndex = 0;
             // 
             // mnuSets
@@ -258,7 +261,7 @@ namespace FlickrMetadataSync
             this.lstAllTags.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstAllTags.Location = new System.Drawing.Point(0, 0);
             this.lstAllTags.Name = "lstAllTags";
-            this.lstAllTags.Size = new System.Drawing.Size(287, 163);
+            this.lstAllTags.Size = new System.Drawing.Size(287, 176);
             this.lstAllTags.TabIndex = 23;
             this.lstAllTags.UseCompatibleStateImageBehavior = false;
             this.lstAllTags.View = System.Windows.Forms.View.List;
@@ -269,123 +272,13 @@ namespace FlickrMetadataSync
             this.changeThisTagMenuItem,
             this.advancedToolStripMenuItem});
             this.mnuAllTags.Name = "mnuTag";
-            this.mnuAllTags.Size = new System.Drawing.Size(153, 70);
+            this.mnuAllTags.Size = new System.Drawing.Size(153, 48);
             // 
             // changeThisTagMenuItem
             // 
             this.changeThisTagMenuItem.Name = "changeThisTagMenuItem";
             this.changeThisTagMenuItem.Size = new System.Drawing.Size(152, 22);
             this.changeThisTagMenuItem.Text = "&Change this Tag";
-            // 
-            // btnSetDateTaken
-            // 
-            this.btnSetDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSetDateTaken.Location = new System.Drawing.Point(618, 131);
-            this.btnSetDateTaken.Name = "btnSetDateTaken";
-            this.btnSetDateTaken.Size = new System.Drawing.Size(86, 22);
-            this.btnSetDateTaken.TabIndex = 22;
-            this.btnSetDateTaken.TabStop = false;
-            this.btnSetDateTaken.Text = "Set date taken";
-            this.btnSetDateTaken.UseVisualStyleBackColor = true;
-            // 
-            // lblDateTaken
-            // 
-            this.lblDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblDateTaken.AutoSize = true;
-            this.lblDateTaken.Location = new System.Drawing.Point(446, 128);
-            this.lblDateTaken.Name = "lblDateTaken";
-            this.lblDateTaken.Size = new System.Drawing.Size(67, 13);
-            this.lblDateTaken.TabIndex = 21;
-            this.lblDateTaken.Text = "Date Taken:";
-            this.lblDateTaken.Click += new System.EventHandler(this.lblDateTaken_Click);
-            // 
-            // btnSetDateTakenForWholeSet
-            // 
-            this.btnSetDateTakenForWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSetDateTakenForWholeSet.Location = new System.Drawing.Point(513, 131);
-            this.btnSetDateTakenForWholeSet.Name = "btnSetDateTakenForWholeSet";
-            this.btnSetDateTakenForWholeSet.Size = new System.Drawing.Size(102, 22);
-            this.btnSetDateTakenForWholeSet.TabIndex = 20;
-            this.btnSetDateTakenForWholeSet.TabStop = false;
-            this.btnSetDateTakenForWholeSet.Text = "Set for every pic";
-            this.btnSetDateTakenForWholeSet.UseVisualStyleBackColor = true;
-            // 
-            // calDateTaken
-            // 
-            this.calDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.calDateTaken.Location = new System.Drawing.Point(708, 0);
-            this.calDateTaken.Name = "calDateTaken";
-            this.calDateTaken.TabIndex = 1;
-            this.calDateTaken.TabStop = false;
-            // 
-            // flickrGopher
-            // 
-            this.flickrGopher.WorkerSupportsCancellation = true;
-            // 
-            // flickrProgressBar
-            // 
-            this.flickrProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.flickrProgressBar.Location = new System.Drawing.Point(293, 317);
-            this.flickrProgressBar.Name = "flickrProgressBar";
-            this.flickrProgressBar.Size = new System.Drawing.Size(157, 23);
-            this.flickrProgressBar.TabIndex = 23;
-            // 
-            // lblFlickrDateTaken
-            // 
-            this.lblFlickrDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblFlickrDateTaken.AutoSize = true;
-            this.lblFlickrDateTaken.Location = new System.Drawing.Point(448, 144);
-            this.lblFlickrDateTaken.Name = "lblFlickrDateTaken";
-            this.lblFlickrDateTaken.Size = new System.Drawing.Size(65, 13);
-            this.lblFlickrDateTaken.TabIndex = 24;
-            this.lblFlickrDateTaken.Text = "12/29/2008";
-            // 
-            // btnRemoveTagFromWholeSet
-            // 
-            this.btnRemoveTagFromWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnRemoveTagFromWholeSet.Enabled = false;
-            this.btnRemoveTagFromWholeSet.Location = new System.Drawing.Point(395, 290);
-            this.btnRemoveTagFromWholeSet.Name = "btnRemoveTagFromWholeSet";
-            this.btnRemoveTagFromWholeSet.Size = new System.Drawing.Size(55, 23);
-            this.btnRemoveTagFromWholeSet.TabIndex = 5;
-            this.btnRemoveTagFromWholeSet.TabStop = false;
-            this.btnRemoveTagFromWholeSet.Text = "Remove";
-            this.btnRemoveTagFromWholeSet.UseVisualStyleBackColor = true;
-            this.btnRemoveTagFromWholeSet.Click += new System.EventHandler(this.btnRemoveTagFromWholeSet_Click);
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.Location = new System.Drawing.Point(334, 291);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(57, 20);
-            this.label1.TabIndex = 26;
-            this.label1.Text = "whole set";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // axWMP
-            // 
-            this.axWMP.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.axWMP.Enabled = true;
-            this.axWMP.Location = new System.Drawing.Point(456, 157);
-            this.axWMP.Name = "axWMP";
-            this.axWMP.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axWMP.OcxState")));
-            this.axWMP.Size = new System.Drawing.Size(430, 156);
-            this.axWMP.TabIndex = 6;
-            this.axWMP.Visible = false;
-            // 
-            // lblVisibility
-            // 
-            this.lblVisibility.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblVisibility.AutoSize = true;
-            this.lblVisibility.Location = new System.Drawing.Point(846, 355);
-            this.lblVisibility.Name = "lblVisibility";
-            this.lblVisibility.Size = new System.Drawing.Size(40, 13);
-            this.lblVisibility.TabIndex = 27;
-            this.lblVisibility.Text = "Private";
-            this.lblVisibility.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // advancedToolStripMenuItem
             // 
@@ -401,11 +294,158 @@ namespace FlickrMetadataSync
             this.refreshAllTagsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.refreshAllTagsToolStripMenuItem.Text = "Refresh All Tags";
             // 
+            // btnSetDateTaken
+            // 
+            this.btnSetDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSetDateTaken.Location = new System.Drawing.Point(629, 131);
+            this.btnSetDateTaken.Name = "btnSetDateTaken";
+            this.btnSetDateTaken.Size = new System.Drawing.Size(86, 22);
+            this.btnSetDateTaken.TabIndex = 22;
+            this.btnSetDateTaken.TabStop = false;
+            this.btnSetDateTaken.Text = "Set date taken";
+            this.btnSetDateTaken.UseVisualStyleBackColor = true;
+            // 
+            // lblDateTaken
+            // 
+            this.lblDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDateTaken.AutoSize = true;
+            this.lblDateTaken.Location = new System.Drawing.Point(457, 128);
+            this.lblDateTaken.Name = "lblDateTaken";
+            this.lblDateTaken.Size = new System.Drawing.Size(67, 13);
+            this.lblDateTaken.TabIndex = 21;
+            this.lblDateTaken.Text = "Date Taken:";
+            this.lblDateTaken.Click += new System.EventHandler(this.lblDateTaken_Click);
+            // 
+            // btnSetDateTakenForWholeSet
+            // 
+            this.btnSetDateTakenForWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSetDateTakenForWholeSet.Location = new System.Drawing.Point(524, 131);
+            this.btnSetDateTakenForWholeSet.Name = "btnSetDateTakenForWholeSet";
+            this.btnSetDateTakenForWholeSet.Size = new System.Drawing.Size(102, 22);
+            this.btnSetDateTakenForWholeSet.TabIndex = 20;
+            this.btnSetDateTakenForWholeSet.TabStop = false;
+            this.btnSetDateTakenForWholeSet.Text = "Set for every pic";
+            this.btnSetDateTakenForWholeSet.UseVisualStyleBackColor = true;
+            // 
+            // calDateTaken
+            // 
+            this.calDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.calDateTaken.Location = new System.Drawing.Point(719, 0);
+            this.calDateTaken.Name = "calDateTaken";
+            this.calDateTaken.TabIndex = 1;
+            this.calDateTaken.TabStop = false;
+            // 
+            // flickrGopher
+            // 
+            this.flickrGopher.WorkerSupportsCancellation = true;
+            // 
+            // flickrProgressBar
+            // 
+            this.flickrProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.flickrProgressBar.Location = new System.Drawing.Point(293, 345);
+            this.flickrProgressBar.Name = "flickrProgressBar";
+            this.flickrProgressBar.Size = new System.Drawing.Size(157, 23);
+            this.flickrProgressBar.TabIndex = 23;
+            // 
+            // lblFlickrDateTaken
+            // 
+            this.lblFlickrDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblFlickrDateTaken.AutoSize = true;
+            this.lblFlickrDateTaken.Location = new System.Drawing.Point(459, 144);
+            this.lblFlickrDateTaken.Name = "lblFlickrDateTaken";
+            this.lblFlickrDateTaken.Size = new System.Drawing.Size(65, 13);
+            this.lblFlickrDateTaken.TabIndex = 24;
+            this.lblFlickrDateTaken.Text = "12/29/2008";
+            // 
+            // btnRemoveTagFromWholeSet
+            // 
+            this.btnRemoveTagFromWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnRemoveTagFromWholeSet.Enabled = false;
+            this.btnRemoveTagFromWholeSet.Location = new System.Drawing.Point(395, 318);
+            this.btnRemoveTagFromWholeSet.Name = "btnRemoveTagFromWholeSet";
+            this.btnRemoveTagFromWholeSet.Size = new System.Drawing.Size(55, 23);
+            this.btnRemoveTagFromWholeSet.TabIndex = 5;
+            this.btnRemoveTagFromWholeSet.TabStop = false;
+            this.btnRemoveTagFromWholeSet.Text = "Remove";
+            this.btnRemoveTagFromWholeSet.UseVisualStyleBackColor = true;
+            this.btnRemoveTagFromWholeSet.Click += new System.EventHandler(this.btnRemoveTagFromWholeSet_Click);
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.Location = new System.Drawing.Point(334, 319);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(57, 20);
+            this.label1.TabIndex = 26;
+            this.label1.Text = "whole set";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // axWMP
+            // 
+            this.axWMP.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.axWMP.Enabled = true;
+            this.axWMP.Location = new System.Drawing.Point(456, 157);
+            this.axWMP.Name = "axWMP";
+            this.axWMP.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axWMP.OcxState")));
+            this.axWMP.Size = new System.Drawing.Size(441, 184);
+            this.axWMP.TabIndex = 6;
+            this.axWMP.Visible = false;
+            // 
+            // lblVisibility
+            // 
+            this.lblVisibility.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblVisibility.AutoSize = true;
+            this.lblVisibility.Location = new System.Drawing.Point(857, 383);
+            this.lblVisibility.Name = "lblVisibility";
+            this.lblVisibility.Size = new System.Drawing.Size(40, 13);
+            this.lblVisibility.TabIndex = 27;
+            this.lblVisibility.Text = "Private";
+            this.lblVisibility.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblBrowse
+            // 
+            this.lblBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblBrowse.AutoSize = true;
+            this.lblBrowse.Location = new System.Drawing.Point(724, 383);
+            this.lblBrowse.Name = "lblBrowse";
+            this.lblBrowse.Size = new System.Drawing.Size(45, 13);
+            this.lblBrowse.TabIndex = 29;
+            this.lblBrowse.Text = "Browse:";
+            // 
+            // lnkPicture
+            // 
+            this.lnkPicture.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lnkPicture.AutoSize = true;
+            this.lnkPicture.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
+            this.lnkPicture.Location = new System.Drawing.Point(771, 383);
+            this.lnkPicture.Name = "lnkPicture";
+            this.lnkPicture.Size = new System.Drawing.Size(40, 13);
+            this.lnkPicture.TabIndex = 30;
+            this.lnkPicture.TabStop = true;
+            this.lnkPicture.Text = "Picture";
+            // 
+            // lnkSet
+            // 
+            this.lnkSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lnkSet.AutoSize = true;
+            this.lnkSet.LinkBehavior = System.Windows.Forms.LinkBehavior.HoverUnderline;
+            this.lnkSet.Location = new System.Drawing.Point(817, 383);
+            this.lnkSet.Name = "lnkSet";
+            this.lnkSet.Size = new System.Drawing.Size(23, 13);
+            this.lnkSet.TabIndex = 31;
+            this.lnkSet.TabStop = true;
+            this.lnkSet.Text = "Set";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(886, 371);
+            this.ClientSize = new System.Drawing.Size(897, 399);
+            this.Controls.Add(this.lnkSet);
+            this.Controls.Add(this.lnkPicture);
+            this.Controls.Add(this.lblBrowse);
             this.Controls.Add(this.lblVisibility);
             this.Controls.Add(this.axWMP);
             this.Controls.Add(this.flickrProgressBar);
@@ -480,6 +520,9 @@ namespace FlickrMetadataSync
         private ToolStripMenuItem renameThisSetToolStripMenuItem;
         private ToolStripMenuItem advancedToolStripMenuItem;
         private ToolStripMenuItem refreshAllTagsToolStripMenuItem;
+        private Label lblBrowse;
+        private LinkLabel lnkPicture;
+        private LinkLabel lnkSet;
     }
 }
 

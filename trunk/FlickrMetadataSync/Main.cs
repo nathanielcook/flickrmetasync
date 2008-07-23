@@ -81,6 +81,8 @@ namespace FlickrMetadataSync
             this.btnAddTagToWholeSet.Click += new EventHandler(btnAddTagToWholeSet_Click);
             this.lstTags.SelectedIndexChanged += new EventHandler(lstTags_SelectedIndexChanged);
             this.refreshAllTagsToolStripMenuItem.Click += new EventHandler(refreshAllTagsToolStripMenuItem_Click);
+            this.lnkPicture.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkPicture_LinkClicked);
+            this.lnkSet.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkSet_LinkClicked);
 
             //get flickr authorization token
             loadAuthToken();
@@ -840,6 +842,14 @@ namespace FlickrMetadataSync
             lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Regular);
             lblVisibility.Text = "";
 
+            lnkPicture.Visible = false;
+            lnkPicture.LinkVisited = false;
+            lnkPicture.Links.Clear();
+
+            lnkSet.Visible = false;
+            lnkSet.LinkVisited = false;
+            lnkSet.Links.Clear();
+
             if (isVideo(selectedItemText))
             {
                 currentContent = new Video(fullFilePath);
@@ -1044,6 +1054,12 @@ namespace FlickrMetadataSync
 
         private void mergeFlickrInUI()
         {
+            lnkPicture.Links.Add(0, 7, (string.Format("http://www.flickr.com/photos/{0}/{1}/in/set-{2}/", flickrUserName, currentContent.flickrID, currentSetId)));
+            lnkPicture.Visible = true;
+
+            lnkSet.Links.Add(0, 3, (string.Format("http://www.flickr.com/photos/{0}/sets/{1}/", flickrUserName, currentSetId)));
+            lnkSet.Visible = true;
+
             if (currentContent is Picture)
             {
                 Picture currentPicture = ((Picture)currentContent);
@@ -1357,15 +1373,25 @@ namespace FlickrMetadataSync
             {
                 if (MessageBox.Show("Are you sure?", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
-                    if (currentContent is Picture)
+                    Cursor.Current = Cursors.WaitCursor;
+                    try
                     {
-                        ((Picture)currentContent).dateTaken = calDateTaken.SelectionStart;
-                        ((Picture)currentContent).Save();
-                    }
+                        if (currentContent is Picture)
+                        {
+                            ((Picture)currentContent).dateTaken = calDateTaken.SelectionStart;
+                            ((Picture)currentContent).Save();
+                        }
 
-                    if (currentContent.flickrLoaded)
+                        if (currentContent.flickrLoaded)
+                        {
+                            flickr.PhotosSetDates(currentContent.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                        }
+                    }
+                    finally
                     {
-                        flickr.PhotosSetDates(currentContent.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                        mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                        Cursor.Current = Cursors.Default;
+                        pictureList.Focus();
                     }
                 }
             }
@@ -1375,23 +1401,28 @@ namespace FlickrMetadataSync
         {
             if (MessageBox.Show("Are you sure? This will take place immediately on flickr too.", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
             {
-                try
+                if (MessageBox.Show("Are you sure? This is for the WHOLE SET!", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
-                    Cursor.Current = Cursors.WaitCursor;
-
-                    foreach (ListViewItem item in pictureList.Items)
+                    try
                     {
-                        Picture picture = new Picture(Path.Combine(setList.SelectedNode.Name, item.Text));
-                        picture.dateTaken = calDateTaken.SelectionStart;
-                        picture.Save();
+                        Cursor.Current = Cursors.WaitCursor;
 
-                        picture.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(picture.filename)];
-                        flickr.PhotosSetDates(picture.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                        foreach (ListViewItem item in pictureList.Items)
+                        {
+                            Picture picture = new Picture(Path.Combine(setList.SelectedNode.Name, item.Text));
+                            picture.dateTaken = calDateTaken.SelectionStart;
+                            picture.Save();
+
+                            picture.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(picture.filename)];
+                            flickr.PhotosSetDates(picture.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                        }
                     }
-                }
-                finally
-                {
-                    Cursor.Current = Cursors.Default;
+                    finally
+                    {
+                        mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                        Cursor.Current = Cursors.Default;
+                        pictureList.Focus();
+                    }
                 }
             }
         }
@@ -1678,6 +1709,28 @@ namespace FlickrMetadataSync
                 flickr.PhotosSetDates(currentContent.flickrID, currentContent.flickrDatePosted.Value, currentContent.flickrDateTaken.Value, DateGranularity.FullDate);
                 mergeFlickrInUI();
             }
+        }
+
+        private void lnkPicture_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            lnkPicture.LinkVisited = true;
+            try
+            {
+                System.Diagnostics.Process.Start(lnkPicture.Links[0].LinkData.ToString());
+            }
+            catch { }
+            pictureList.Focus();
+        }
+
+        private void lnkSet_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            lnkSet.LinkVisited = true;
+            try
+            {
+                System.Diagnostics.Process.Start(lnkSet.Links[0].LinkData.ToString());
+            }
+            catch { }
+            pictureList.Focus();
         }
     }
 }
