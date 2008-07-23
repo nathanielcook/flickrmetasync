@@ -912,6 +912,7 @@ namespace FlickrMetadataSync
                 picturesDictionary.Clear();
                 currentSetName = "";
                 currentSetId = "";
+                //currentContent = null;
 
                 for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                 {
@@ -932,7 +933,7 @@ namespace FlickrMetadataSync
                 }
             }
 
-            if (!currentContent.flickrLoaded && currentContent.flickrID != null)
+            if (currentContent != null && !currentContent.flickrLoaded && currentContent.flickrID != null)
             {
                 PhotoInfo photoInfo = flickr.PhotosGetInfo(currentContent.flickrID);
 
@@ -1263,7 +1264,7 @@ namespace FlickrMetadataSync
 
         private void loadFlickrPhotoId()
         {
-            if (currentContent != null && currentContent.flickrID == null)
+            if (currentSetName == selectedNodeName && currentContent != null && currentContent.flickrID == null)
             {
                 if (picturesDictionary.ContainsKey(Path.GetFileNameWithoutExtension(currentContent.filename)))
                 {
