@@ -50,6 +50,13 @@ namespace FlickrMetadataSync
         private double? previousGpsLatitude;
         private double? previousGpsLongitude;
 
+        //drag and drop for the picture box
+        private int xDrag;
+        private int yDrag;
+        private int xPictureBoxOriginal;
+        private int yPictureBoxOriginal;
+        private Point mouseDownLocation;
+
         public Main()
         {
             InitializeComponent();
@@ -83,6 +90,12 @@ namespace FlickrMetadataSync
             this.refreshAllTagsToolStripMenuItem.Click += new EventHandler(refreshAllTagsToolStripMenuItem_Click);
             this.lnkPicture.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkPicture_LinkClicked);
             this.lnkSet.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkSet_LinkClicked);
+            this.pictureBox.DragOver += new DragEventHandler(pictureBox_DragOver);
+            this.pictureBox.DragEnter += new DragEventHandler(pictureBox_DragEnter);
+            this.pictureBox.DoubleClick += new EventHandler(pictureBox_DoubleClick);
+            this.pictureBox.MouseDown += new MouseEventHandler(pictureBox_MouseDown);
+            this.pictureBox.MouseMove += new MouseEventHandler(pictureBox_MouseMove);
+            this.Resize += new EventHandler(Main_Resize);
 
             //get flickr authorization token
             loadAuthToken();
@@ -776,6 +789,8 @@ namespace FlickrMetadataSync
 
         void pictureList_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
+            unZoomPicture();
+
             if (e.IsSelected)
             {
                 if (currentContent != null)
@@ -1732,5 +1747,135 @@ namespace FlickrMetadataSync
             catch { }
             pictureList.Focus();
         }
+
+        private void pictureBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                // we know the mouse is down - has it the mouse moved enough that we should
+                // consider it a drag?
+                System.Drawing.Size dragBoxSize = SystemInformation.DragSize;
+                //(dragBoxSize.Width > Math.Abs(mouseDownLocation.X - e.X)) || (dragBoxSize.Height > Math.Abs(mouseDownLocation.Y - e.Y))
+                if (1==1)
+                {
+                    if (pictureBox.SizeMode == PictureBoxSizeMode.Zoom)
+                    {
+                        if (pictureBox.Image.Size.Height > pictureBox.Size.Height || pictureBox.Image.Size.Width > pictureBox.Size.Width)
+                        {
+                            zoomPicture();
+                            xDrag = e.X;
+                            yDrag = e.Y;
+                        }
+                    }
+                    else
+                    {
+                        xDrag = e.X + pictureBox.Location.X;
+                        yDrag = e.Y + pictureBox.Location.Y;
+                    }
+
+                    if (pictureBox.SizeMode == PictureBoxSizeMode.CenterImage)
+                    {
+                        xPictureBoxOriginal = pictureBox.Location.X;
+                        yPictureBoxOriginal = pictureBox.Location.Y;
+
+                        this.DoDragDrop("zoomer", DragDropEffects.Move);
+                    }
+                }
+            }
+        }
+
+        private void zoomPicture()
+        {
+            pictureBox.SizeMode = PictureBoxSizeMode.CenterImage;
+            pictureBox.Size = pictureBox.Image.Size;
+
+            //this code centers the picture box
+            int x = (pictureBox.Image.Size.Width - pnlPictureBox.Size.Width) / 2;
+            int y = (pictureBox.Image.Size.Height - pnlPictureBox.Size.Height) / 2;
+
+            if (x < 0)
+                x = 0;
+            else
+                x *= -1;
+
+            if (y < 0)
+                y = 0;
+            else
+                y *= -1;
+
+            pictureBox.Location = new Point(x, y);
+        }
+
+        void pictureBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            mouseDownLocation = new Point(e.X, e.Y);
+
+            if (pictureBox.AllowDrop == false)
+                pictureBox.AllowDrop = true;
+        }
+
+        void pictureBox_DoubleClick(object sender, EventArgs e)
+        {
+            switch (pictureBox.SizeMode)
+            {
+                case PictureBoxSizeMode.Zoom:
+                    if (pictureBox.Image.Size.Height > pictureBox.Size.Height || pictureBox.Image.Size.Width > pictureBox.Size.Width)
+                    {
+                        zoomPicture();
+                    }
+                    break;
+                case PictureBoxSizeMode.CenterImage:
+                    unZoomPicture();
+                    break;
+            }
+        }
+
+        private void unZoomPicture()
+        {
+            pictureBox.Location = new Point(0, 0);
+            pictureBox.Size = pnlPictureBox.Size;
+            pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+        }
+
+        void Main_Resize(object sender, EventArgs e)
+        {
+            if (pictureBox.SizeMode == PictureBoxSizeMode.CenterImage)
+            {
+                if (pictureBox.Image.Size.Height < pictureBox.Size.Height || pictureBox.Image.Size.Width < pictureBox.Size.Width)
+                {
+                    unZoomPicture();
+                }
+            }
+        }
+
+        void pictureBox_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;            
+        }
+
+        void pictureBox_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(String.Empty.GetType()).ToString().Equals("zoomer"))
+            {
+                Point currentMouseLocation = PointToClient(new Point(e.X - pnlPictureBox.Location.X, e.Y - pnlPictureBox.Location.Y));
+
+                //this.Text = pictureBox.Location.ToString() + " mouse: " + currentMouseLocation.ToString() + "x,yDrag: " + string.Format("{{{0},{1}}}", xDrag, yDrag);
+
+                Point proposedLocation = new Point(xPictureBoxOriginal + (currentMouseLocation.X - xDrag), yPictureBoxOriginal + (currentMouseLocation.Y - yDrag));
+
+                if (proposedLocation.X > 0)
+                    proposedLocation.X = 0;
+                else if (proposedLocation.X < (-1 * (pictureBox.Image.Size.Width - pnlPictureBox.Size.Width)))
+                    proposedLocation.X = -1 * (pictureBox.Image.Size.Width - pnlPictureBox.Size.Width);
+
+                if (proposedLocation.Y > 0)
+                    proposedLocation.Y = 0;
+                else if (proposedLocation.Y < (-1 * (pictureBox.Image.Size.Height - pnlPictureBox.Size.Height)))
+                    proposedLocation.Y = -1 * (pictureBox.Image.Size.Height - pnlPictureBox.Size.Height);
+
+                pictureBox.Location = proposedLocation;
+            }
+        }
+
     }
 }

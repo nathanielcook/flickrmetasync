@@ -30,11 +30,10 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
-            this.pictureBox = new System.Windows.Forms.PictureBox();
             this.pictureList = new System.Windows.Forms.ListView();
             this.mnuSelected = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addTagToSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -72,7 +71,8 @@ namespace FlickrMetadataSync
             this.lblBrowse = new System.Windows.Forms.Label();
             this.lnkPicture = new System.Windows.Forms.LinkLabel();
             this.lnkSet = new System.Windows.Forms.LinkLabel();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
+            this.pnlPictureBox = new System.Windows.Forms.Panel();
+            this.pictureBox = new System.Windows.Forms.PictureBox();
             this.mnuSelected.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -80,6 +80,8 @@ namespace FlickrMetadataSync
             this.mnuSets.SuspendLayout();
             this.mnuAllTags.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).BeginInit();
+            this.pnlPictureBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // timer1
@@ -87,18 +89,6 @@ namespace FlickrMetadataSync
             this.timer1.Enabled = true;
             this.timer1.Interval = 500;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
-            // pictureBox
-            // 
-            this.pictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBox.Location = new System.Drawing.Point(456, 157);
-            this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(441, 184);
-            this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox.TabIndex = 5;
-            this.pictureBox.TabStop = false;
             // 
             // pictureList
             // 
@@ -151,7 +141,7 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem2});
             this.lstTags.Location = new System.Drawing.Point(292, 134);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 149);
@@ -438,11 +428,35 @@ namespace FlickrMetadataSync
             this.lnkSet.TabStop = true;
             this.lnkSet.Text = "Set";
             // 
+            // pnlPictureBox
+            // 
+            this.pnlPictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlPictureBox.Controls.Add(this.pictureBox);
+            this.pnlPictureBox.Location = new System.Drawing.Point(456, 157);
+            this.pnlPictureBox.Name = "pnlPictureBox";
+            this.pnlPictureBox.Size = new System.Drawing.Size(441, 184);
+            this.pnlPictureBox.TabIndex = 32;
+            // 
+            // pictureBox
+            // 
+            this.pictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox.Location = new System.Drawing.Point(1, 2);
+            this.pictureBox.Name = "pictureBox";
+            this.pictureBox.Size = new System.Drawing.Size(441, 184);
+            this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox.TabIndex = 6;
+            this.pictureBox.TabStop = false;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(897, 399);
+            this.Controls.Add(this.pnlPictureBox);
             this.Controls.Add(this.lnkSet);
             this.Controls.Add(this.lnkPicture);
             this.Controls.Add(this.lblBrowse);
@@ -461,14 +475,12 @@ namespace FlickrMetadataSync
             this.Controls.Add(this.tagReadingProgressBar);
             this.Controls.Add(this.calDateTaken);
             this.Controls.Add(this.lstTags);
-            this.Controls.Add(this.pictureList);
             this.Controls.Add(this.lblGeotag);
-            this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.txtPictureCaption);
+            this.Controls.Add(this.pictureList);
             this.MinimumSize = new System.Drawing.Size(756, 316);
             this.Name = "Main";
             this.Text = "Flickr Metadata Sync";
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.mnuSelected.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
@@ -476,6 +488,8 @@ namespace FlickrMetadataSync
             this.mnuSets.ResumeLayout(false);
             this.mnuAllTags.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).EndInit();
+            this.pnlPictureBox.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -485,7 +499,6 @@ namespace FlickrMetadataSync
 
         private Timer timer1;
         private FolderBrowserDialog folderPicker;
-        private PictureBox pictureBox;
         private ListView pictureList;
         private ListView lstTags;
         private Label lblGeotag;
@@ -523,6 +536,8 @@ namespace FlickrMetadataSync
         private Label lblBrowse;
         private LinkLabel lnkPicture;
         private LinkLabel lnkSet;
+        private Panel pnlPictureBox;
+        private PictureBox pictureBox;
     }
 }
 
