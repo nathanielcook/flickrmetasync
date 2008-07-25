@@ -616,7 +616,10 @@ namespace FlickrMetadataSync
             if (txtTag.Text.Length > 0)
                 btnAddTagToWholeSet.Enabled = true;
             else
+            {
                 btnAddTagToWholeSet.Enabled = false;
+                pictureList.Focus();
+            }
 
             lstAllTags.Items.Clear();
 
@@ -1175,19 +1178,21 @@ namespace FlickrMetadataSync
                 {
                     if (!currentPicture.tags.Contains(tag))
                     {
-                        //assume that the tag is already compliant with the capitalization
+                        //assume that the tag is already compliant with the capitalization1
                         string copyOfTag = tag;
                         if (!containsTag(lstAllTags, ref copyOfTag))
                         {
-                            lstAllTags.Items.Add(tag, tag, 0);
+                            if (tag.Equals(copyOfTag))
+                                lstAllTags.Items.Add(tag, tag, 0);
                         }
-                        if (tag != copyOfTag)
+                        if (!tag.Equals(copyOfTag))
                         {
                             //throw new Exception("Flickr capitalization doesn't match local capitalization");
                             currentPicture.flickrMergedInUI = true; //to avoid a new message box every second
                             MessageBox.Show(string.Format("Flickr capitalization for tag \"{0}\" doesn't match local capitalization. Tags not merged.", tag));
 
                             ListViewItem item = new ListViewItem(tag);
+                            item.Font = new Font(item.Font, FontStyle.Italic);
                             item.ForeColor = Color.Red;
                             lstTags.Items.Add(item);
                         }
@@ -1215,7 +1220,10 @@ namespace FlickrMetadataSync
                 {
                     if (currentPicture.flickrTags.Contains(item.Text))
                     {
-                        item.ForeColor = Color.Blue;
+                        if (item.Font.Italic == false)
+                            item.ForeColor = Color.Blue;
+                        else
+                            item.Font = new Font(item.Font, FontStyle.Regular);
                     }
                     else
                     {
@@ -1449,6 +1457,7 @@ namespace FlickrMetadataSync
                 try
                 {
                     Cursor.Current = Cursors.WaitCursor;
+                    pictureList.Select();
 
                     string tag = txtTag.Text;
                     addTagToAllItems(tag, pictureList.Items);
@@ -1459,7 +1468,6 @@ namespace FlickrMetadataSync
                     Cursor.Current = Cursors.Default;
                 }
             }
-            pictureList.Select();
         }
 
         void addTagToSelectedMenuItem_Click(object sender, EventArgs e)
@@ -1561,7 +1569,7 @@ namespace FlickrMetadataSync
                 try
                 {
                     Cursor.Current = Cursors.WaitCursor;
-
+                    pictureList.Select();
                     removeTagFromAllItems(tag, pictureList.Items);
                 }
                 finally
@@ -1569,7 +1577,6 @@ namespace FlickrMetadataSync
                     Cursor.Current = Cursors.Default;
                 }
             }
-            pictureList.Select();
         }
 
         void removeTagFromSelectedMenuItem_Click(object sender, EventArgs e)
@@ -1756,7 +1763,7 @@ namespace FlickrMetadataSync
                 // consider it a drag?
                 System.Drawing.Size dragBoxSize = SystemInformation.DragSize;
                 //(dragBoxSize.Width > Math.Abs(mouseDownLocation.X - e.X)) || (dragBoxSize.Height > Math.Abs(mouseDownLocation.Y - e.Y))
-                if (1==1)
+                if (1 == 1)
                 {
                     if (pictureBox.SizeMode == PictureBoxSizeMode.Zoom)
                     {
@@ -1850,7 +1857,7 @@ namespace FlickrMetadataSync
 
         void pictureBox_DragEnter(object sender, DragEventArgs e)
         {
-            e.Effect = DragDropEffects.Move;            
+            e.Effect = DragDropEffects.Move;
         }
 
         void pictureBox_DragOver(object sender, DragEventArgs e)
