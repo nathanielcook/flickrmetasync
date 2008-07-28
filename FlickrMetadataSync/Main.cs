@@ -56,6 +56,7 @@ namespace FlickrMetadataSync
         private int xPictureBoxOriginal;
         private int yPictureBoxOriginal;
         private Point mouseDownLocation;
+        private static object lock_tagReaderPause = new object();
 
         public Main()
         {
@@ -129,27 +130,104 @@ namespace FlickrMetadataSync
 
         void renameThisSetToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            renameSet();
+        }
+
+        private void renameSet()
+        {
             if (!setList.SelectedNode.FullPath.Equals(setList.TopNode.FullPath))
             {
-                string setID = currentSetId;
-                string oldSetName = currentSetName;
-
-                string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, "");
+                string thisSetID = currentSetId;
+                string oldSetName = setList.SelectedNode.Text;
+                string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, oldSetName);
 
                 if (newSetName.Length > 0 && MessageBox.Show(string.Format("Are you sure you want to change \"{0}\" to \"{1}\"?", oldSetName, newSetName), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
                     try
                     {
                         Cursor.Current = Cursors.WaitCursor;
-                        Directory.Move(Path.Combine(localFlickrDirectory, oldSetName), Path.Combine(localFlickrDirectory, newSetName));
-                        flickr.PhotosetsEditMeta(setID, newSetName, flickr.PhotosetsGetInfo(setID).Description);
-                        populateTreeView();
-                        photosets = null;
+
+                        Photoset thisSet = flickr.PhotosetsGetInfo(thisSetID);
+
+                        if (thisSet.Title.Equals(oldSetName))
+                        {
+                            flickr.PhotosetsEditMeta(thisSetID, newSetName, thisSet.Description);
+                        }
+                        Directory.Move(Path.Combine(localFlickrDirectory, oldSetName), localFlickrDirectory + "\\" + newSetName);
+
+                        //rename the sets in photosets variable
+                        for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
+                        {
+                            if (photosets.PhotosetCollection[i].Title.Equals(oldSetName) && photosets.PhotosetCollection[i].PhotosetId.Equals(thisSetID))
+                            {
+                                photosets.PhotosetCollection[i].Title = newSetName;
+                            }
+                        }
+
+                        //rename the sets in the alltags and tagreader tags NameValueCollections
+                        //pause the tag reader during this operation
+                        lock (lock_tagReaderPause)
+                        {
+                            for (int i = 0; i <= 1; i++)
+                            {
+                                NameValueCollection tagCollection;
+
+                                if (i == 0)
+                                    tagCollection = allTags;
+                                else
+                                    tagCollection = tagReaderTags;
+
+                                NameValueCollection changeQueue = new NameValueCollection();
+
+                                foreach (string tag in tagCollection.AllKeys)
+                                {
+                                    foreach (string pictureFileName in tagCollection.GetValues(tag))
+                                    {
+                                        if (pictureFileName.Replace(Path.GetFileName(pictureFileName), "").Replace(localFlickrDirectory, "").IndexOf(oldSetName) > -1)
+                                        {
+                                            changeQueue.Add(tag, pictureFileName);
+                                        }
+                                    }
+                                }
+
+                                foreach (string tag in changeQueue.AllKeys)
+                                {
+                                    foreach (string pictureFileName in changeQueue.GetValues(tag))
+                                    {
+                                        removeOnlyThisKeyValueCombo(tagCollection, tag, pictureFileName);
+                                        tagCollection.Add(tag, pictureFileName.Replace(oldSetName, newSetName));
+                                    }
+                                }
+                            }
+                        }
                     }
                     finally
                     {
                         Cursor.Current = Cursors.Default;
                     }
+
+                    populateTreeView();
+                    setList.SelectedNode = setList.Nodes.Find(Path.Combine(localFlickrDirectory, newSetName), true)[0];
+                }
+            }
+        }
+
+        private void removeOnlyThisKeyValueCombo(NameValueCollection nvc, string key, string value)
+        {
+            List<String> listOfValuesWithThisKey = new List<String>(nvc.GetValues(key));
+
+            //removes all values with this key (tag)
+            nvc.Remove(key);
+
+            //if there was more than 1, lets add the others back
+            if (listOfValuesWithThisKey.Count > 1)
+            {
+                //exclude the one we are removing
+                listOfValuesWithThisKey.Remove(value);
+
+                foreach (string valueStillHasKey in listOfValuesWithThisKey)
+                {
+                    nvc.Add(key, valueStillHasKey);
                 }
             }
         }
@@ -471,6 +549,9 @@ namespace FlickrMetadataSync
                 {
                     string tag = txtTag.Text.Trim();
 
+                    if (tag.ToLower().Equals("me"))
+                        tag = "myself";
+
                     //if it's not already there.
                     if (!containsTag(lstTags, ref tag))
                     {
@@ -577,22 +658,7 @@ namespace FlickrMetadataSync
 
             if (tagCollection.GetValues(tag) != null)
             {
-                List<String> listOfFilesWithThisTag = new List<String>(tagCollection.GetValues(tag));
-
-                //removes all values with this key (tag)
-                tagCollection.Remove(tag);
-
-                //if there was more than 1, lets add the others back
-                if (listOfFilesWithThisTag.Count > 1)
-                {
-                    //exclude the one we are removing
-                    listOfFilesWithThisTag.Remove(fileName);
-
-                    foreach (string fileStillHasTag in listOfFilesWithThisTag)
-                    {
-                        tagCollection.Add(tag, fileStillHasTag);
-                    }
-                }
+                removeOnlyThisKeyValueCombo(tagCollection, tag, fileName);
             }
         }
 
@@ -714,6 +780,15 @@ namespace FlickrMetadataSync
                 e.SuppressKeyPress = true;
                 pictureList.Select();
             }
+            else if ((e.KeyCode >= Keys.A && e.KeyCode <= Keys.Z) || e.KeyCode == Keys.OemMinus)
+            {
+                e.SuppressKeyPress = true;
+                pictureList.Select();
+            }
+            else if (e.KeyCode == Keys.F2 && currentSetName.Equals(selectedNodeName) && currentSetId != null)
+            {
+                renameSet();
+            }
         }
 
         void pictureList_KeyDown(object sender, KeyEventArgs e)
@@ -732,7 +807,7 @@ namespace FlickrMetadataSync
             {
                 txtPictureCaption.Focus();
             }
-            else if (e.KeyCode >= Keys.A && e.KeyCode <= Keys.Z)
+            else if ((e.KeyCode >= Keys.A && e.KeyCode <= Keys.Z))
             {
                 e.SuppressKeyPress = true;
                 txtTag.Focus();
@@ -742,6 +817,18 @@ namespace FlickrMetadataSync
                 {
                     txtTag.Text = txtTag.Text.ToUpper();
                 }
+            }
+            else if (e.KeyCode == Keys.OemMinus)
+            {
+                e.SuppressKeyPress = true;
+                txtTag.Focus();
+
+                if (e.Shift)
+                    txtTag.Text += "_";
+                else
+                    txtTag.Text += "-";
+
+                txtTag.SelectionStart = txtTag.Text.Length;
             }
         }
 
@@ -1037,6 +1124,18 @@ namespace FlickrMetadataSync
                     }
                     tagReadingProgressBar.Value = tagReadingProgress;
                 }
+                else if (tagReadingProgressBar.Value > 95 && tagReadingProgress == 0)
+                {
+                    tagReadingProgressBar.Value = 0;
+                    tagReadingProgressBar.Visible = false;
+                    lstAllTags.Clear();
+
+                    foreach (string tag in allTags)
+                    {
+                        lstAllTags.Items.Add(tag, tag, 0);
+                    }
+
+                }
 
                 loadFlickrPhotoId();
 
@@ -1227,9 +1326,16 @@ namespace FlickrMetadataSync
                     }
                     else
                     {
+                        //if (item.Text != "??????????")
+                        //{
                         item.ForeColor = Color.Red;
                         currentPicture.flickrTags.Add(item.Text);
                         saveFlickrTags = true;
+                        //}
+                        //else
+                        //{
+                        //    MessageBox.Show("Houston we have a problem.");
+                        //}
                     }
                 }
 
@@ -1322,22 +1428,25 @@ namespace FlickrMetadataSync
                 if (tagReader.CancellationPending)
                     return;
 
-                Picture picture = new Picture(file);
-                foreach (String tag in picture.tags)
+                lock (lock_tagReaderPause)
                 {
-                    if (tag.Length > 0)
+                    Picture picture = new Picture(file);
+                    foreach (String tag in picture.tags)
                     {
-                        // if not already in tagreader tags (might have been added on a txtTag_KeyDown by the user)
-                        addTagIfNotAlreadyThere(tag, picture, tagReaderTags);
-
-                        if (tagReaderTags.GetValues(tag) == null)
+                        if (tag.Length > 0)
                         {
-                            newlyScannedTags.Add(tag);
+                            // if not already in tagreader tags (might have been added on a txtTag_KeyDown by the user)
+                            addTagIfNotAlreadyThere(tag, picture, tagReaderTags);
+
+                            if (tagReaderTags.GetValues(tag) == null)
+                            {
+                                newlyScannedTags.Add(tag);
+                            }
                         }
-                    }
-                    else
-                    {
-                        throw new Exception("zero length tag");
+                        else
+                        {
+                            //throw new Exception("zero length tag");
+                        }
                     }
                 }
 
