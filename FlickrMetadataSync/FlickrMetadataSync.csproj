@@ -35,6 +35,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Release\FlickrNet.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>

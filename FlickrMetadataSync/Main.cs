@@ -89,6 +89,8 @@ namespace FlickrMetadataSync
             this.btnAddTagToWholeSet.Click += new EventHandler(btnAddTagToWholeSet_Click);
             this.lstTags.SelectedIndexChanged += new EventHandler(lstTags_SelectedIndexChanged);
             this.refreshAllTagsToolStripMenuItem.Click += new EventHandler(refreshAllTagsToolStripMenuItem_Click);
+            this.copyTagsToolStripMenuItem.Click += new EventHandler(copyTagsToolStripMenuItem_Click);
+            this.pasteTagsToolStripMenuItem.Click += new EventHandler(pasteTagsToolStripMenuItem_Click);
             this.lnkPicture.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkPicture_LinkClicked);
             this.lnkSet.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkSet_LinkClicked);
             this.pictureBox.DragOver += new DragEventHandler(pictureBox_DragOver);
@@ -121,6 +123,101 @@ namespace FlickrMetadataSync
                 //leave this as the last line in Main()
                 tagReader.RunWorkerAsync();
             }
+        }
+
+        void pasteTagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (pictureList.SelectedItems.Count > 0)
+            {
+                string clipboardText = Clipboard.GetText(TextDataFormat.Text);
+                string[] tags = clipboardText.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                bool oneOrMoreTagsTooLong = false;
+
+                foreach (string tag in tags)
+                {
+                    if (tag.Length > 50)
+                    {
+                        oneOrMoreTagsTooLong = true;
+                    }
+                }
+
+                if (tags.Length == 0 || oneOrMoreTagsTooLong)
+                {
+                    MessageBox.Show("There are no tags in the clipboard or the tags are not in the correct format. Each tag must be on a separate line, with no double quotes. Each tag must be no more than 50 characters. Paste unsuccessful.");
+                }
+                else
+                {
+                    if (MessageBox.Show("Are you sure you want to add the following tags to the selected photos?" + "\r\n\r\n" + clipboardText, Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        foreach (string tag in tags)
+                            addTagToAllItems(tag, pictureList.SelectedItems);
+
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
+        }
+
+        void copyTagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Cursor.Current = Cursors.WaitCursor;
+
+            string clipboardText = "";
+            StringCollection copiedSoFar = new StringCollection();
+
+            if (pictureList.SelectedItems.Count > 0)
+            {
+                foreach (ListViewItem item in pictureList.SelectedItems)
+                {
+                    string fullFilePath = Path.Combine(setList.SelectedNode.Name, item.Text);
+
+                    Content content;
+                    bool isPicture = false;
+                    if (isVideo(item.Text))
+                        content = new Video(fullFilePath);
+                    else
+                    {
+                        content = new Picture(fullFilePath);
+                        isPicture = true;
+                    }
+
+                    content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+
+                    if (isPicture)
+                    {
+                        foreach (string tag in ((Picture)content).tags)
+                        {
+                            if (!copiedSoFar.Contains(tag))
+                            {
+                                clipboardText += tag + "\r\n";
+                                copiedSoFar.Add(tag);
+                            }
+                        }
+                    }
+
+                    //get flickr tags
+                    PhotoInfo photoInfo = flickr.PhotosGetInfo(content.flickrID);
+                    foreach (PhotoInfoTag photoInfoTag in photoInfo.Tags.TagCollection)
+                    {
+                        string tag = photoInfoTag.Raw;
+                        if (!copiedSoFar.Contains(tag))
+                        {
+                            clipboardText += tag + "\r\n";
+                            copiedSoFar.Add(tag);
+                        }
+                    }
+                }
+
+                //remove the last \r\n
+                if (clipboardText.Length > 0)
+                    clipboardText = clipboardText.Substring(0, clipboardText.Length - 2);
+
+                Clipboard.SetText(clipboardText, TextDataFormat.Text);
+            }
+
+            Cursor.Current = Cursors.Default;
         }
 
         void refreshAllTagsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -687,7 +784,7 @@ namespace FlickrMetadataSync
                 pictureList.Focus();
             }
 
-            lstAllTags.Items.Clear();
+            lstAllTags.Clear();
 
             string text = txtTag.Text.Trim();
             foreach (string tag in allTags)
@@ -809,13 +906,24 @@ namespace FlickrMetadataSync
             }
             else if ((e.KeyCode >= Keys.A && e.KeyCode <= Keys.Z))
             {
-                e.SuppressKeyPress = true;
-                txtTag.Focus();
-
-                SendKeys.Send(e.KeyCode.ToString().ToLower());
-                if ((System.Windows.Forms.Control.IsKeyLocked(Keys.CapsLock) && !e.Shift) || (e.Shift && !Control.IsKeyLocked(Keys.CapsLock)))
+                if (e.KeyCode == Keys.C && e.Control)
                 {
-                    txtTag.Text = txtTag.Text.ToUpper();
+                    copyTagsToolStripMenuItem_Click(copyTagsToolStripMenuItem, new EventArgs());
+                }
+                else if (e.KeyCode == Keys.V && e.Control)
+                {
+                    pasteTagsToolStripMenuItem_Click(copyTagsToolStripMenuItem, new EventArgs());
+                }
+                else
+                {
+                    e.SuppressKeyPress = true;
+                    txtTag.Focus();
+
+                    SendKeys.Send(e.KeyCode.ToString().ToLower());
+                    if ((System.Windows.Forms.Control.IsKeyLocked(Keys.CapsLock) && !e.Shift) || (e.Shift && !Control.IsKeyLocked(Keys.CapsLock)))
+                    {
+                        txtTag.Text = txtTag.Text.ToUpper();
+                    }
                 }
             }
             else if (e.KeyCode == Keys.OemMinus)
@@ -829,6 +937,89 @@ namespace FlickrMetadataSync
                     txtTag.Text += "-";
 
                 txtTag.SelectionStart = txtTag.Text.Length;
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                deletePhoto();
+            }
+        }
+
+        private void deletePhoto()
+        {
+            int index = 0;
+
+            if (pictureList.SelectedItems.Count > 1)
+            {
+                MessageBox.Show("You may only delete one photo at a time.", Application.ProductName);
+            }
+            else if (pictureList.SelectedItems.Count == 1)
+            {
+                if (MessageBox.Show("Are you sure? This will delete the photo on flickr too! (The local will go in the recyle bin. To undo, you will have to restore the file from the recycle bin, reupload it to flickr and add it back to this set.)", "Delete item " + pictureList.SelectedItems[0].Text + " ???", MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    if (MessageBox.Show("Are you sure you really want to delete " + pictureList.SelectedItems[0].Text + " ??? This is your last chance to cancel.", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                    {
+                        try
+                        {
+                            Cursor.Current = Cursors.WaitCursor;
+
+                            flickr.PhotosDelete(currentContent.flickrID);
+                            //File.Delete(currentContent.filename);
+                            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(currentContent.filename, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin, Microsoft.VisualBasic.FileIO.UICancelOption.DoNothing);
+
+                            //delete the entries for this photo from the allTags and tagReaderTags NVC
+                            //pause the tag reader during this operation
+                            lock (lock_tagReaderPause)
+                            {
+                                for (int i = 0; i <= 1; i++)
+                                {
+                                    NameValueCollection tagCollection;
+
+                                    if (i == 0)
+                                        tagCollection = allTags;
+                                    else
+                                        tagCollection = tagReaderTags;
+
+                                    NameValueCollection changeQueue = new NameValueCollection();
+
+                                    foreach (string tag in tagCollection.AllKeys)
+                                    {
+                                        foreach (string pictureFileName in tagCollection.GetValues(tag))
+                                        {
+                                            if (pictureFileName.Equals(currentContent.filename))
+                                            {
+                                                changeQueue.Add(tag, pictureFileName);
+                                            }
+                                        }
+                                    }
+
+                                    foreach (string tag in changeQueue.AllKeys)
+                                    {
+                                        foreach (string pictureFileName in changeQueue.GetValues(tag))
+                                        {
+                                            removeOnlyThisKeyValueCombo(tagCollection, tag, pictureFileName);
+                                        }
+                                    }
+                                }
+                            }
+
+                            index = pictureList.SelectedItems[0].Index;
+                            pictureList.Items.Remove(pictureList.SelectedItems[0]);
+
+                            if (index > (pictureList.Items.Count - 1))
+                                index = (pictureList.Items.Count - 1);
+                        }
+                        finally
+                        {
+                            Cursor.Current = Cursors.Default;
+
+                            if (index >= 0)
+                                pictureList.Focus();
+
+                            pictureList.Items[index].Selected = true;
+                        }
+                    }
+                }
+
             }
         }
 
@@ -853,7 +1044,7 @@ namespace FlickrMetadataSync
         {
             selectedNodeName = e.Node.Text;
 
-            pictureList.Items.Clear();
+            pictureList.Clear();
             pictureList.View = View.List;
 
             DirectoryInfo subDir = new DirectoryInfo(e.Node.Name);
@@ -1082,7 +1273,7 @@ namespace FlickrMetadataSync
             else
             {
                 string frob = flickr.AuthGetFrob();
-                string url = flickr.AuthCalcUrl(frob, AuthLevel.Write);
+                string url = flickr.AuthCalcUrl(frob, AuthLevel.Delete);
 
                 if (MessageBox.Show("Authorization needed.", Application.ProductName, MessageBoxButtons.OKCancel) != DialogResult.OK)
                 {
@@ -1128,13 +1319,8 @@ namespace FlickrMetadataSync
                 {
                     tagReadingProgressBar.Value = 0;
                     tagReadingProgressBar.Visible = false;
-                    lstAllTags.Clear();
 
-                    foreach (string tag in allTags)
-                    {
-                        lstAllTags.Items.Add(tag, tag, 0);
-                    }
-
+                    populateAllTagsListView();
                 }
 
                 loadFlickrPhotoId();
@@ -1166,6 +1352,15 @@ namespace FlickrMetadataSync
                 {
                     mergeFlickrInUI();
                 }
+            }
+        }
+
+        private void populateAllTagsListView()
+        {
+            lstAllTags.Clear();
+            foreach (string tag in allTags)
+            {
+                lstAllTags.Items.Add(tag, tag, 0);
             }
         }
 
@@ -1468,7 +1663,7 @@ namespace FlickrMetadataSync
             key.SetValue("lastAllTagsScanDate", lastAllTagsScanDate);
         }
 
-        private static void saveAllTagsToDisk(NameValueCollection tagsToSave)
+        private void saveAllTagsToDisk(NameValueCollection tagsToSave)
         {
             lock (lock_AllTagsSerialization)
             {
@@ -1497,6 +1692,8 @@ namespace FlickrMetadataSync
                     soapFormatter.Serialize(fileStream, allTags);
                 }
             }
+
+            populateAllTagsListView();
         }
 
         private void btnSetDateTaken_Click(object sender, EventArgs e)
@@ -1603,7 +1800,7 @@ namespace FlickrMetadataSync
 
         private void addTagToAllItems(string tag, ICollection items)
         {
-            if (!containsTag(lstAllTags, ref  tag))//correct the case
+            if (!containsTag(lstAllTags, ref tag))//correct the case
             {
                 lstAllTags.Items.Add(tag, tag, 0);
             }
@@ -1622,8 +1819,11 @@ namespace FlickrMetadataSync
                 {
                     Picture picture = ((Picture)content);
 
-                    picture.tags.Add(tag);
-                    picture.Save();
+                    if (!picture.tags.Contains(tag))
+                    {
+                        picture.tags.Add(tag);
+                        picture.Save();
+                    }
 
                     addTagIfNotAlreadyThere(tag, picture, allTags);
                     if (tagReader.IsBusy)
@@ -1655,9 +1855,12 @@ namespace FlickrMetadataSync
                     {
                         content.flickrTags.Add(photoInfo.Tags.TagCollection[i].Raw);
                     }
-                    content.flickrTags.Add(tag);
 
-                    setFlickrTags(content);
+                    if (!content.flickrTags.Contains(tag))
+                    {
+                        content.flickrTags.Add(tag);
+                        setFlickrTags(content);
+                    }
                 }
                 //flickr END-------------------------------------------------------------------------
 
@@ -1871,31 +2074,28 @@ namespace FlickrMetadataSync
                 // we know the mouse is down - has it the mouse moved enough that we should
                 // consider it a drag?
                 System.Drawing.Size dragBoxSize = SystemInformation.DragSize;
-                //(dragBoxSize.Width > Math.Abs(mouseDownLocation.X - e.X)) || (dragBoxSize.Height > Math.Abs(mouseDownLocation.Y - e.Y))
-                if (1 == 1)
+
+                if (pictureBox.SizeMode == PictureBoxSizeMode.Zoom)
                 {
-                    if (pictureBox.SizeMode == PictureBoxSizeMode.Zoom)
+                    if (pictureBox.Image.Size.Height > pictureBox.Size.Height || pictureBox.Image.Size.Width > pictureBox.Size.Width)
                     {
-                        if (pictureBox.Image.Size.Height > pictureBox.Size.Height || pictureBox.Image.Size.Width > pictureBox.Size.Width)
-                        {
-                            zoomPicture();
-                            xDrag = e.X;
-                            yDrag = e.Y;
-                        }
+                        zoomPicture();
+                        xDrag = e.X;
+                        yDrag = e.Y;
                     }
-                    else
-                    {
-                        xDrag = e.X + pictureBox.Location.X;
-                        yDrag = e.Y + pictureBox.Location.Y;
-                    }
+                }
+                else
+                {
+                    xDrag = e.X + pictureBox.Location.X;
+                    yDrag = e.Y + pictureBox.Location.Y;
+                }
 
-                    if (pictureBox.SizeMode == PictureBoxSizeMode.CenterImage)
-                    {
-                        xPictureBoxOriginal = pictureBox.Location.X;
-                        yPictureBoxOriginal = pictureBox.Location.Y;
+                if (pictureBox.SizeMode == PictureBoxSizeMode.CenterImage)
+                {
+                    xPictureBoxOriginal = pictureBox.Location.X;
+                    yPictureBoxOriginal = pictureBox.Location.Y;
 
-                        this.DoDragDrop("zoomer", DragDropEffects.Move);
-                    }
+                    this.DoDragDrop("zoomer", DragDropEffects.Move);
                 }
             }
         }
@@ -1988,6 +2188,12 @@ namespace FlickrMetadataSync
                     proposedLocation.Y = 0;
                 else if (proposedLocation.Y < (-1 * (pictureBox.Image.Size.Height - pnlPictureBox.Size.Height)))
                     proposedLocation.Y = -1 * (pictureBox.Image.Size.Height - pnlPictureBox.Size.Height);
+
+                if (pictureBox.Image.Size.Height < pnlPictureBox.Size.Height)
+                    proposedLocation.Y = yPictureBoxOriginal;
+
+                if (pictureBox.Image.Size.Width < pnlPictureBox.Size.Width)
+                    proposedLocation.X = xPictureBoxOriginal;
 
                 pictureBox.Location = proposedLocation;
             }
