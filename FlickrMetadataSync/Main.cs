@@ -50,6 +50,8 @@ namespace FlickrMetadataSync
         private DateTime? previousDateTaken;
         private double? previousGpsLatitude;
         private double? previousGpsLongitude;
+        private int previousPictureIndex;
+        private StringCollection selectedItems = new StringCollection();
 
         //drag and drop for the picture box
         private int xDrag;
@@ -250,7 +252,23 @@ namespace FlickrMetadataSync
                     {
                         flickr.PhotosetsEditMeta(thisSetID, newSetName, thisSet.Description);
                     }
-                    Directory.Move(Path.Combine(localFlickrDirectory, oldSetName), localFlickrDirectory + "\\" + newSetName);
+
+                    string oldFolderName = Path.Combine(localFlickrDirectory, oldSetName);
+                    string newFolderName = Path.Combine(localFlickrDirectory, newSetName);
+
+                    if (oldFolderName.ToLower().Equals(newFolderName.ToLower()))
+                    {
+                        //since the windows directory structure is case insensitive, we must do this
+                        //to allow for someone just wanting to change the casing of a set/folder.
+                        string tmpFolderName = Path.Combine(localFlickrDirectory, oldSetName + "_tmp");
+
+                        Directory.Move(oldFolderName, tmpFolderName);
+                        Directory.Move(tmpFolderName, newFolderName);
+                    }
+                    else
+                    {
+                        Directory.Move(oldFolderName, newFolderName);
+                    }
 
                     //rename the sets in photosets variable
                     for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
@@ -640,69 +658,92 @@ namespace FlickrMetadataSync
         {
             if (e.KeyCode == Keys.Enter)
             {
-                //this is so it will do nothing if they are attempting to add a tag to a video and flickr
-                //is not yet loaded.
-                if (currentContent is Picture || (currentContent is Video && currentContent.flickrLoaded))
+                if (pictureList.SelectedItems.Count > 1)
                 {
-                    string tag = txtTag.Text.Trim();
+                    string tag = InputBox("OK to add this tag to all selected items?", "There is more than one picture/video selected", txtTag.Text);
 
-                    if (tag.ToLower().Equals("me"))
-                        tag = "myself";
-
-                    //if it's not already there.
-                    if (!containsTag(lstTags, ref tag))
+                    if (tag.Length > 0)
                     {
-                        if (currentContent is Picture)
+                        try
                         {
-                            Picture currentPicture = ((Picture)currentContent);
+                            Cursor.Current = Cursors.WaitCursor;
 
-                            //add to lstAllTags if not already there
-                            if (!containsTag(lstAllTags, ref tag))
+                            addTagToAllItems(tag, pictureList.SelectedItems);
+                        }
+                        finally
+                        {
+                            Cursor.Current = Cursors.Default;
+                            txtTag.Clear();
+                            pictureList.Focus();
+                        }
+                    }
+                }
+                else
+                {
+                    //this is so it will do nothing if they are attempting to add a tag to a video and flickr
+                    //is not yet loaded.
+                    if (currentContent is Picture || (currentContent is Video && currentContent.flickrLoaded))
+                    {
+                        string tag = txtTag.Text.Trim();
+
+                        if (tag.ToLower().Equals("me"))
+                            tag = "myself";
+
+                        //if it's not already there.
+                        if (!containsTag(lstTags, ref tag))
+                        {
+                            if (currentContent is Picture)
                             {
-                                lstAllTags.Items.Add(tag, tag, 0);
+                                Picture currentPicture = ((Picture)currentContent);
+
+                                //add to lstAllTags if not already there
+                                if (!containsTag(lstAllTags, ref tag))
+                                {
+                                    lstAllTags.Items.Add(tag, tag, 0);
+                                }
+
+                                //add to alltags if not already there
+                                addTagIfNotAlreadyThere(tag, currentPicture, allTags);
+
+                                // if tagreader tags is busy, and not in tagreader tags, add to tagreader tags
+                                if (tagReader.IsBusy)
+                                {
+                                    addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
+                                }
+
+                                //now actually add the tag to the picture
+                                currentPicture.tags.Add(tag);
+                                currentPicture.Save();
+
+                                saveAllTagsToDisk(allTags);
+                                populateAllTagsListView();
+
+                            } //if (currentContent is Picture)
+
+                            ListViewItem item = new ListViewItem(tag);
+
+                            if (currentContent.flickrTags != null)
+                            {
+                                currentContent.flickrTags.Add(tag);
+                                setFlickrTags(currentContent);
+
+                                item.ForeColor = Color.Blue;
+                            }
+                            else
+                            {
+                                item.ForeColor = Color.Red;
                             }
 
-                            //add to alltags if not already there
-                            addTagIfNotAlreadyThere(tag, currentPicture, allTags);
+                            lstTags.Items.Add(item);
+                            item.EnsureVisible();
 
-                            // if tagreader tags is busy, and not in tagreader tags, add to tagreader tags
-                            if (tagReader.IsBusy)
-                            {
-                                addTagIfNotAlreadyThere(tag, currentPicture, tagReaderTags);
-                            }
+                        } //if (!containsTag(lstTags, ref tag))
 
-                            //now actually add the tag to the picture
-                            currentPicture.tags.Add(tag);
-                            currentPicture.Save();
+                        txtTag.Clear();
+                        pictureList.Select();
 
-                            saveAllTagsToDisk(allTags);
-                            populateAllTagsListView();
-
-                        } //if (currentContent is Picture)
-
-                        ListViewItem item = new ListViewItem(tag);
-
-                        if (currentContent.flickrTags != null)
-                        {
-                            currentContent.flickrTags.Add(tag);
-                            setFlickrTags(currentContent);
-
-                            item.ForeColor = Color.Blue;
-                        }
-                        else
-                        {
-                            item.ForeColor = Color.Red;
-                        }
-
-                        lstTags.Items.Add(item);
-                        item.EnsureVisible();
-
-                    } //if (!containsTag(lstTags, ref tag))
-
-                    txtTag.Clear();
-                    pictureList.Select();
-
-                } //if (currentcontent is Picture || (currentContent is Video && currentContent.flickrLoaded))
+                    } //if (currentcontent is Picture || (currentContent is Video && currentContent.flickrLoaded))
+                }
             }
             else if (e.KeyCode == Keys.Space && e.Control == true)
             {
@@ -801,6 +842,33 @@ namespace FlickrMetadataSync
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
+
+                if (!isVideo(currentContent.filename))
+                {
+                    Picture picture = (Picture)currentContent;
+
+                    if (txtPictureCaption.Text.Equals("") && (picture.caption == null || picture.caption.Equals("")))
+                    {
+                        //do nothing
+                    }
+                    else if (!txtPictureCaption.Text.Equals(picture.caption))
+                    {
+                        picture.caption = txtPictureCaption.Text.Trim();
+                        picture.Save();
+                        flickr.PhotosSetMeta(picture.flickrID, picture.flickrTitle, picture.caption);
+                    }
+                }
+
+                pictureList.Focus();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                if (txtPictureCaption.Tag != null)
+                    txtPictureCaption.Text = txtPictureCaption.Tag.ToString();
+                else
+                    txtPictureCaption.Text = "";
+
+                e.SuppressKeyPress = true;
                 pictureList.Focus();
             }
         }
@@ -813,6 +881,7 @@ namespace FlickrMetadataSync
         void txtPictureCaption_Enter(object sender, EventArgs e)
         {
             txtPictureCaption.BackColor = Color.White;
+            txtPictureCaption.Tag = txtPictureCaption.Text;
         }
 
         private void getRegistrySettings()
@@ -1087,19 +1156,33 @@ namespace FlickrMetadataSync
             if (!e.IsSelected)
             {
                 e.Item.Font = new Font(e.Item.Font, FontStyle.Regular);
+                previousPictureIndex = e.Item.Index;
+                pictureBox.Tag = "invalid";
+                selectedItems.Remove(e.Item.Text);
+                lstTags.Clear();
             }
             else if (e.IsSelected)
             {
+                if (!selectedItems.Contains(e.Item.Text))
+                {
+                    selectedItems.Add(e.Item.Text);
+                }
+
                 e.Item.Font = new Font(e.Item.Font, FontStyle.Bold);
 
                 if (currentContent != null)
                 {
+                    int secondsToAdd = 1;
+
+                    if (e.Item.Index == (previousPictureIndex - 1))
+                        secondsToAdd = -1;
+
                     if (currentContent is Picture)
                     {
                         Picture currentPicture = ((Picture)currentContent);
 
                         if (currentPicture.dateTaken.HasValue)
-                            previousDateTaken = currentPicture.dateTaken;
+                            previousDateTaken = currentPicture.dateTaken.Value.AddSeconds(secondsToAdd);
 
                         if (currentPicture.gpsLatitude.HasValue)
                             previousGpsLatitude = currentPicture.gpsLatitude;
@@ -1110,7 +1193,7 @@ namespace FlickrMetadataSync
                     else if (currentContent is Video)
                     {
                         if (currentContent.flickrDateTaken.HasValue)
-                            previousDateTaken = currentContent.flickrDateTaken;
+                            previousDateTaken = currentContent.flickrDateTaken.Value.AddSeconds(secondsToAdd);
                         else
                             previousDateTaken = null;
 
@@ -1132,7 +1215,7 @@ namespace FlickrMetadataSync
 
         private Boolean isVideo(string fileName)
         {
-            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith("*.mov"))
+            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith(".mov"))
                 return true;
             else
                 return false;
@@ -1152,6 +1235,7 @@ namespace FlickrMetadataSync
             toolTip1.SetToolTip(txtPictureCaption, "");
             calDateTaken.TitleBackColor = Color.LightGray;
             string geoTag = "Geotag: ";
+            pictureBox.Tag = null;
             lblGeotag.Text = geoTag;
             lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Regular);
             lblVisibility.Text = "";
@@ -1200,6 +1284,10 @@ namespace FlickrMetadataSync
                 {
                     calDateTaken.TitleBackColor = Color.LightBlue;
                     calDateTaken.SetDate(currentPicture.dateTaken.Value);
+                }
+                else if (previousDateTaken.HasValue)
+                {
+                    calDateTaken.SetDate(previousDateTaken.Value);
                 }
 
                 //load tags
@@ -1374,6 +1462,21 @@ namespace FlickrMetadataSync
                 if (currentContent != null && !currentContent.flickrMergedInUI && currentContent.flickrLoaded)
                 {
                     mergeFlickrInUI();
+                }
+
+                if (pictureList.SelectedItems.Count >= 1)
+                {
+                    if (pictureList.FocusedItem != null && pictureList.FocusedItem.Selected && !pictureList.FocusedItem.Text.ToLower().Equals(Path.GetFileName(currentContent.filename).ToLower()))
+                    {
+                        mergeLocalInUI(pictureList.FocusedItem.Text);
+                    }
+                    else if (pictureBox.Tag != null && pictureBox.Tag.ToString().Equals("invalid"))
+                    {
+                        if (pictureList.FocusedItem.Selected)
+                            mergeLocalInUI(pictureList.FocusedItem.Text);
+                        else
+                            mergeLocalInUI(selectedItems[selectedItems.Count - 1]);
+                    }
                 }
             }
         }
