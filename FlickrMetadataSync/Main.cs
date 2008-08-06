@@ -103,6 +103,10 @@ namespace FlickrMetadataSync
             this.pictureBox.MouseDown += new MouseEventHandler(pictureBox_MouseDown);
             this.pictureBox.MouseMove += new MouseEventHandler(pictureBox_MouseMove);
             this.Resize += new EventHandler(Main_Resize);
+            this.calDateTaken.DateChanged += new System.Windows.Forms.DateRangeEventHandler(this.calDateTaken_DateChanged);
+            this.dtpDateTaken.ValueChanged += new EventHandler(dtpDateTaken_ValueChanged);
+            this.lblVisibility.Click += new EventHandler(lblVisibility_Click);
+            this.btnReUpload.Click += new EventHandler(btnReUpload_Click);
 
             //get flickr authorization token
             loadAuthToken();
@@ -127,6 +131,43 @@ namespace FlickrMetadataSync
                 //leave this as the last line in Main()
                 tagReader.RunWorkerAsync();
             }
+        }
+
+        void btnReUpload_Click(object sender, EventArgs e)
+        {
+            if (pictureList.SelectedItems.Count == 1 && currentContent != null && currentContent.flickrLoaded)
+            {
+                if (MessageBox.Show(string.Format("Are you sure you want to re-upload the following photo? \r\n\r\n{0}\r\n\r\nThis will replace the existing photo on flickr.", currentContent.filename), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        flickr.ReplacePicture(currentContent.filename, currentContent.flickrID);
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                }
+            }
+
+        }
+
+        void lblVisibility_Click(object sender, EventArgs e)
+        {
+            if (pictureList.SelectedItems.Count == 1)
+            {
+                if (lblVisibility.Text.ToLower().Equals("private"))
+                    changeVisibility(1, pictureList.SelectedItems);
+                else if (lblVisibility.Text.ToLower().Equals("public"))
+                    changeVisibility(0, pictureList.SelectedItems);
+            }
+        }
+
+        void dtpDateTaken_ValueChanged(object sender, EventArgs e)
+        {
+            calDateTaken.SetDate(dtpDateTaken.Value);
         }
 
         void pasteTagsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -325,6 +366,105 @@ namespace FlickrMetadataSync
                 setList.SelectedNode = setList.Nodes.Find(Path.Combine(localFlickrDirectory, newSetName), true)[0];
             }
         }
+
+        private void renamePhoto()
+        {
+            if (currentContent != null && currentContent.flickrLoaded && pictureList.SelectedItems.Count == 1 && Path.GetFileName(currentContent.filename).Equals(pictureList.SelectedItems[0].Text))
+            {
+                string oldPhotoName = pictureList.SelectedItems[0].Text;
+                string newPhotoName = InputBox(string.Format("Enter the new file name for the photo (currently named {0}).\r\n\r\nNote: Include the file extension!", oldPhotoName), Application.ProductName, oldPhotoName);
+
+                if (newPhotoName.Length > 0 && newPhotoName.IndexOf(".") > -1 && MessageBox.Show(string.Format("Are you sure you want to change \"{0}\" to \"{1}\"?", oldPhotoName, newPhotoName), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        PhotoInfo photoInfo = flickr.PhotosGetInfo(currentContent.flickrID);
+
+                        if (photoInfo.Title.Equals(Path.GetFileNameWithoutExtension(oldPhotoName)))
+                        {
+                            flickr.PhotosSetMeta(photoInfo.PhotoId, Path.GetFileNameWithoutExtension(newPhotoName), photoInfo.Description);
+                        }
+
+                        string oldPhotoFilePath = Path.Combine(setList.SelectedNode.Name, oldPhotoName);
+                        string newPhotoFilePath = Path.Combine(setList.SelectedNode.Name, newPhotoName);
+
+                        if (oldPhotoFilePath.ToLower().Equals(newPhotoFilePath.ToLower()))
+                        {
+                            //since the windows directory structure is case insensitive, we must do this
+                            //to allow for someone just wanting to change the casing of a set/folder.
+                            string tmpFilePath = Path.Combine(setList.SelectedNode.Name, oldPhotoName + "_tmp");
+
+                            File.Move(oldPhotoFilePath, tmpFilePath);
+                            File.Move(tmpFilePath, newPhotoFilePath);
+                        }
+                        else
+                        {
+                            File.Move(oldPhotoFilePath, newPhotoFilePath);
+                        }
+
+                        //rename the sets in pictureDictionary
+                        picturesDictionary.Remove(Path.GetFileNameWithoutExtension(oldPhotoName));
+                        picturesDictionary.Add(Path.GetFileNameWithoutExtension(newPhotoName), currentContent.flickrID);
+
+                        //rename the sets in the alltags and tagreader tags NameValueCollections
+                        //pause the tag reader during this operation
+                        lock (lock_tagReaderPause)
+                        {
+                            for (int i = 0; i <= 1; i++)
+                            {
+                                NameValueCollection tagCollection;
+
+                                if (i == 0)
+                                    tagCollection = allTags;
+                                else
+                                    tagCollection = tagReaderTags;
+
+                                NameValueCollection changeQueue = new NameValueCollection();
+
+                                foreach (string tag in tagCollection.AllKeys)
+                                {
+                                    foreach (string pictureFileName in tagCollection.GetValues(tag))
+                                    {
+                                        if (pictureFileName.Equals(oldPhotoFilePath))
+                                        {
+                                            changeQueue.Add(tag, pictureFileName);
+                                        }
+                                    }
+                                }
+
+                                foreach (string tag in changeQueue.AllKeys)
+                                {
+                                    foreach (string pictureFileName in changeQueue.GetValues(tag))
+                                    {
+                                        removeOnlyThisKeyValueCombo(tagCollection, tag, pictureFileName);
+                                        tagCollection.Add(tag, newPhotoFilePath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        Cursor.Current = Cursors.Default;
+                    }
+                    populatePictureList(setList.SelectedNode.Name);
+                    foreach (ListViewItem item in pictureList.Items)
+                    {
+                        if (item.Text.ToLower().Equals(newPhotoName.ToLower()))
+                        {
+                            item.Selected = true;
+                            item.Focused = true;
+                            item.EnsureVisible();
+                        }
+                        else
+                            item.Selected = false;
+                    }
+                }
+            }
+        }
+
 
         private void removeOnlyThisKeyValueCombo(NameValueCollection nvc, string key, string value)
         {
@@ -1005,6 +1145,10 @@ namespace FlickrMetadataSync
             {
                 deletePhoto();
             }
+            else if (e.KeyCode == Keys.F2)
+            {
+                renamePhoto();
+            }
         }
 
         private void deletePhoto()
@@ -1120,10 +1264,23 @@ namespace FlickrMetadataSync
         {
             selectedNodeName = e.Node.Text;
 
+            populatePictureList(e.Node.Name);
+
+            if (e.Action == TreeViewAction.ByMouse)
+            {
+                needToSetFocusToPictureList = true;
+            }
+
+            btnSetDateTaken.Enabled = false;
+            btnSetDateTakenForWholeSet.Enabled = false;
+        }
+
+        private void populatePictureList(string folderPath)
+        {
             pictureList.Clear();
             pictureList.View = View.List;
 
-            DirectoryInfo subDir = new DirectoryInfo(e.Node.Name);
+            DirectoryInfo subDir = new DirectoryInfo(folderPath);
 
             foreach (FileInfo fileInfo in subDir.GetFiles("*.jpg"))
                 pictureList.Items.Add(fileInfo.Name);
@@ -1139,14 +1296,6 @@ namespace FlickrMetadataSync
 
             if (pictureList.Items.Count > 0)
                 pictureList.Items[0].Selected = true;
-
-            if (e.Action == TreeViewAction.ByMouse)
-            {
-                needToSetFocusToPictureList = true;
-            }
-
-            btnSetDateTaken.Enabled = false;
-            btnSetDateTakenForWholeSet.Enabled = false;
         }
 
         void pictureList_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
@@ -2032,7 +2181,16 @@ namespace FlickrMetadataSync
 
                 populateAllTagsListView();
 
-                mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                string fileName;
+
+                if (pictureList.SelectedItems.Count == 1)
+                    fileName = pictureList.SelectedItems[0].Text;
+                else if (pictureList.FocusedItem != null)
+                    fileName = pictureList.FocusedItem.Text;
+                else
+                    fileName = pictureList.Items[0].Text;
+
+                mergeLocalInUI(fileName);
                 if (currentContent.flickrLoaded)
                 {
                     mergeFlickrInUI();
@@ -2367,5 +2525,12 @@ namespace FlickrMetadataSync
             }
         }
 
+        private void calDateTaken_DateChanged(object sender, DateRangeEventArgs e)
+        {
+            if (dtpDateTaken.Value != e.Start && !e.Start.Equals(new DateTime(e.Start.Year, e.Start.Month, e.Start.Day, 0, 0, 0)))
+            {
+                dtpDateTaken.Value = e.Start;
+            }
+        }
     }
 }
