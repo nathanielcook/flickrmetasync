@@ -75,7 +75,9 @@ namespace FlickrMetadataSync
                             //tags                             
                             foreach (string tag in bitmapMetadata.Keywords)
                             {
-                                tags.Add(tag);
+                                //if there is a question mark then there is a text encoding issue.
+                                if (!tag.Contains("?"))
+                                    tags.Add(tag);
                             }
                         }
 
@@ -287,20 +289,27 @@ namespace FlickrMetadataSync
                         output.Save(outputFile);
                     }
                 }
-                catch (NotSupportedException e)
+                catch (Exception e) //System.Exception, NotSupportedException, InvalidOperationException e) //ArgumentException
                 {
-                    System.Diagnostics.Debug.Print(e.Message);
-
-                    output = new JpegBitmapEncoder();
-
-                    output.Frames.Add(BitmapFrame.Create(original.Frames[0], original.Frames[0].Thumbnail, original.Metadata, original.Frames[0].ColorContexts));
-
-                    using (Stream outputFile = File.Open(outputFileName, FileMode.Create, FileAccess.ReadWrite))
+                    if (e is NotSupportedException || e is ArgumentException)
                     {
-                        output.Save(outputFile);
-                    }
+                        System.Diagnostics.Debug.Print(e.Message);
 
-                    tryOneLastMethod = true;
+                        output = new JpegBitmapEncoder();
+
+                        output.Frames.Add(BitmapFrame.Create(original.Frames[0], original.Frames[0].Thumbnail, original.Metadata, original.Frames[0].ColorContexts));
+
+                        using (Stream outputFile = File.Open(outputFileName, FileMode.Create, FileAccess.ReadWrite))
+                        {
+                            output.Save(outputFile);
+                        }
+
+                        tryOneLastMethod = true;
+                    }
+                    else
+                    {
+                        throw new Exception("Error saving picture.", e);
+                    }
                 }
             }
 
