@@ -42,6 +42,7 @@ namespace FlickrMetadataSync
             this.makePrivateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pasteTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setDateTakenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstTags = new System.Windows.Forms.ListView();
             this.lblGeotag = new System.Windows.Forms.Label();
             this.txtPictureCaption = new System.Windows.Forms.TextBox();
@@ -59,6 +60,7 @@ namespace FlickrMetadataSync
             this.changeThisTagMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.advancedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshAllTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sortSetsOnFlickrToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnSetDateTaken = new System.Windows.Forms.Button();
             this.lblDateTaken = new System.Windows.Forms.Label();
             this.btnSetDateTakenForWholeSet = new System.Windows.Forms.Button();
@@ -114,9 +116,10 @@ namespace FlickrMetadataSync
             this.makePublicToolStripMenuItem,
             this.makePrivateToolStripMenuItem,
             this.copyTagsToolStripMenuItem,
-            this.pasteTagsToolStripMenuItem});
+            this.pasteTagsToolStripMenuItem,
+            this.setDateTakenToolStripMenuItem});
             this.mnuSelected.Name = "mnuSelected";
-            this.mnuSelected.Size = new System.Drawing.Size(196, 136);
+            this.mnuSelected.Size = new System.Drawing.Size(196, 158);
             // 
             // addTagToSelectedMenuItem
             // 
@@ -156,6 +159,12 @@ namespace FlickrMetadataSync
             this.pasteTagsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.pasteTagsToolStripMenuItem.Text = "Paste Tags";
             // 
+            // setDateTakenToolStripMenuItem
+            // 
+            this.setDateTakenToolStripMenuItem.Name = "setDateTakenToolStripMenuItem";
+            this.setDateTakenToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.setDateTakenToolStripMenuItem.Text = "Set Date Taken";
+            // 
             // lstTags
             // 
             this.lstTags.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -163,9 +172,9 @@ namespace FlickrMetadataSync
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem2});
-            this.lstTags.Location = new System.Drawing.Point(292, 134);
+            this.lstTags.Location = new System.Drawing.Point(292, 159);
             this.lstTags.Name = "lstTags";
-            this.lstTags.Size = new System.Drawing.Size(158, 137);
+            this.lstTags.Size = new System.Drawing.Size(158, 112);
             this.lstTags.TabIndex = 2;
             this.lstTags.UseCompatibleStateImageBehavior = false;
             this.lstTags.View = System.Windows.Forms.View.List;
@@ -294,7 +303,7 @@ namespace FlickrMetadataSync
             this.changeThisTagMenuItem,
             this.advancedToolStripMenuItem});
             this.mnuAllTags.Name = "mnuTag";
-            this.mnuAllTags.Size = new System.Drawing.Size(153, 48);
+            this.mnuAllTags.Size = new System.Drawing.Size(153, 70);
             // 
             // changeThisTagMenuItem
             // 
@@ -305,7 +314,8 @@ namespace FlickrMetadataSync
             // advancedToolStripMenuItem
             // 
             this.advancedToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.refreshAllTagsToolStripMenuItem});
+            this.refreshAllTagsToolStripMenuItem,
+            this.sortSetsOnFlickrToolStripMenuItem});
             this.advancedToolStripMenuItem.Name = "advancedToolStripMenuItem";
             this.advancedToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.advancedToolStripMenuItem.Text = "Advanced";
@@ -313,8 +323,14 @@ namespace FlickrMetadataSync
             // refreshAllTagsToolStripMenuItem
             // 
             this.refreshAllTagsToolStripMenuItem.Name = "refreshAllTagsToolStripMenuItem";
-            this.refreshAllTagsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.refreshAllTagsToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
             this.refreshAllTagsToolStripMenuItem.Text = "Refresh All Tags";
+            // 
+            // sortSetsOnFlickrToolStripMenuItem
+            // 
+            this.sortSetsOnFlickrToolStripMenuItem.Name = "sortSetsOnFlickrToolStripMenuItem";
+            this.sortSetsOnFlickrToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
+            this.sortSetsOnFlickrToolStripMenuItem.Text = "Sort Sets on Flickr";
             // 
             // btnSetDateTaken
             // 
@@ -331,7 +347,7 @@ namespace FlickrMetadataSync
             // 
             this.lblDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblDateTaken.AutoSize = true;
-            this.lblDateTaken.Location = new System.Drawing.Point(453, 128);
+            this.lblDateTaken.Location = new System.Drawing.Point(347, 128);
             this.lblDateTaken.Name = "lblDateTaken";
             this.lblDateTaken.Size = new System.Drawing.Size(67, 13);
             this.lblDateTaken.TabIndex = 21;
@@ -340,14 +356,14 @@ namespace FlickrMetadataSync
             // 
             // btnSetDateTakenForWholeSet
             // 
-            this.btnSetDateTakenForWholeSet.Location = new System.Drawing.Point(258, 119);
+            this.btnSetDateTakenForWholeSet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSetDateTakenForWholeSet.Location = new System.Drawing.Point(419, 132);
             this.btnSetDateTakenForWholeSet.Name = "btnSetDateTakenForWholeSet";
-            this.btnSetDateTakenForWholeSet.Size = new System.Drawing.Size(102, 22);
+            this.btnSetDateTakenForWholeSet.Size = new System.Drawing.Size(102, 21);
             this.btnSetDateTakenForWholeSet.TabIndex = 20;
             this.btnSetDateTakenForWholeSet.TabStop = false;
             this.btnSetDateTakenForWholeSet.Text = "Set for every pic";
             this.btnSetDateTakenForWholeSet.UseVisualStyleBackColor = true;
-            this.btnSetDateTakenForWholeSet.Visible = false;
             // 
             // calDateTaken
             // 
@@ -373,11 +389,12 @@ namespace FlickrMetadataSync
             // 
             this.lblFlickrDateTaken.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblFlickrDateTaken.AutoSize = true;
-            this.lblFlickrDateTaken.Location = new System.Drawing.Point(455, 144);
+            this.lblFlickrDateTaken.Location = new System.Drawing.Point(349, 144);
             this.lblFlickrDateTaken.Name = "lblFlickrDateTaken";
             this.lblFlickrDateTaken.Size = new System.Drawing.Size(65, 13);
             this.lblFlickrDateTaken.TabIndex = 24;
             this.lblFlickrDateTaken.Text = "12/29/2008";
+            this.lblFlickrDateTaken.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblVisibility
             // 
@@ -600,6 +617,8 @@ namespace FlickrMetadataSync
         private ImageList imageList1;
         private DateTimePicker dtpDateTaken;
         private Button btnReUpload;
+        private ToolStripMenuItem setDateTakenToolStripMenuItem;
+        private ToolStripMenuItem sortSetsOnFlickrToolStripMenuItem;
     }
 }
 

@@ -31,9 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FlickrNet, Version=2.1.5.19851, Culture=neutral, PublicKeyToken=2491df59efa5d132">
+    <Reference Include="FlickrNet, Version=2.1.5.36233, Culture=neutral, PublicKeyToken=2491df59efa5d132, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Release\FlickrNet.dll</HintPath>
+      <HintPath>..\..\..\FlickrNet 2.1.5 altered\FlickrNet\bin\Release\FlickrNet.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationCore">
@@ -74,6 +74,7 @@
     <Compile Include="Main.designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
+    <Compile Include="PhotosetComparer.cs" />
     <Compile Include="Picture.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -119,6 +120,9 @@
       <WrapperTool>tlbimp</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
