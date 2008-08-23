@@ -30,7 +30,7 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
@@ -80,6 +80,8 @@ namespace FlickrMetadataSync
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.dtpDateTaken = new System.Windows.Forms.DateTimePicker();
             this.btnReUpload = new System.Windows.Forms.Button();
+            this.copyGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pasteGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuSelected.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -117,9 +119,11 @@ namespace FlickrMetadataSync
             this.makePrivateToolStripMenuItem,
             this.copyTagsToolStripMenuItem,
             this.pasteTagsToolStripMenuItem,
-            this.setDateTakenToolStripMenuItem});
+            this.setDateTakenToolStripMenuItem,
+            this.copyGeoTagToolStripMenuItem,
+            this.pasteGeoTagToolStripMenuItem});
             this.mnuSelected.Name = "mnuSelected";
-            this.mnuSelected.Size = new System.Drawing.Size(196, 158);
+            this.mnuSelected.Size = new System.Drawing.Size(196, 224);
             // 
             // addTagToSelectedMenuItem
             // 
@@ -171,7 +175,7 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
+            listViewItem1});
             this.lstTags.Location = new System.Drawing.Point(292, 159);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 112);
@@ -303,7 +307,7 @@ namespace FlickrMetadataSync
             this.changeThisTagMenuItem,
             this.advancedToolStripMenuItem});
             this.mnuAllTags.Name = "mnuTag";
-            this.mnuAllTags.Size = new System.Drawing.Size(153, 70);
+            this.mnuAllTags.Size = new System.Drawing.Size(153, 48);
             // 
             // changeThisTagMenuItem
             // 
@@ -523,6 +527,18 @@ namespace FlickrMetadataSync
             this.btnReUpload.Text = "Re-Upload";
             this.btnReUpload.UseVisualStyleBackColor = true;
             // 
+            // copyGeoTagToolStripMenuItem
+            // 
+            this.copyGeoTagToolStripMenuItem.Name = "copyGeoTagToolStripMenuItem";
+            this.copyGeoTagToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.copyGeoTagToolStripMenuItem.Text = "Copy GeoTag";
+            // 
+            // pasteGeoTagToolStripMenuItem
+            // 
+            this.pasteGeoTagToolStripMenuItem.Name = "pasteGeoTagToolStripMenuItem";
+            this.pasteGeoTagToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.pasteGeoTagToolStripMenuItem.Text = "Paste GeoTag";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -619,6 +635,8 @@ namespace FlickrMetadataSync
         private Button btnReUpload;
         private ToolStripMenuItem setDateTakenToolStripMenuItem;
         private ToolStripMenuItem sortSetsOnFlickrToolStripMenuItem;
+        private ToolStripMenuItem copyGeoTagToolStripMenuItem;
+        private ToolStripMenuItem pasteGeoTagToolStripMenuItem;
     }
 }
 

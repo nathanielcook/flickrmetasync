@@ -113,6 +113,8 @@ namespace FlickrMetadataSync
             this.btnReUpload.Click += new EventHandler(btnReUpload_Click);
             this.setDateTakenToolStripMenuItem.Click += new EventHandler(setDateTakenToolStripMenuItem_Click);
             this.sortSetsOnFlickrToolStripMenuItem.Click += new EventHandler(sortSetsOnFlickrToolStripMenuItem_Click);
+            this.copyGeoTagToolStripMenuItem.Click += new EventHandler(copyGeoTagToolStripMenuItem_Click);
+            this.pasteGeoTagToolStripMenuItem.Click += new EventHandler(pasteGeoTagToolStripMenuItem_Click);
 
             //get flickr authorization token
             loadAuthToken();
@@ -137,6 +139,16 @@ namespace FlickrMetadataSync
                 //leave this as the last line in Main()
                 tagReader.RunWorkerAsync();
             }
+        }
+
+        void pasteGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        void copyGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         void setDateTakenToolStripMenuItem_Click(object sender, EventArgs e)
@@ -310,6 +322,9 @@ namespace FlickrMetadataSync
             string oldSetName = setList.SelectedNode.Text;
             string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, oldSetName);
 
+            string oldFolderName = setList.SelectedNode.Name;
+            string newFolderName = setList.SelectedNode.Name.Replace(oldSetName, newSetName);
+
             if (newSetName.Length > 0 && MessageBox.Show(string.Format("Are you sure you want to change \"{0}\" to \"{1}\"?", oldSetName, newSetName), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
             {
                 try
@@ -326,14 +341,11 @@ namespace FlickrMetadataSync
                         }
                     }
 
-                    string oldFolderName = Path.Combine(localFlickrDirectory, oldSetName);
-                    string newFolderName = Path.Combine(localFlickrDirectory, newSetName);
-
                     if (oldFolderName.ToLower().Equals(newFolderName.ToLower()))
                     {
                         //since the windows directory structure is case insensitive, we must do this
                         //to allow for someone just wanting to change the casing of a set/folder.
-                        string tmpFolderName = Path.Combine(localFlickrDirectory, oldSetName + "_tmp");
+                        string tmpFolderName = setList.SelectedNode.Name + "_tmp";
 
                         Directory.Move(oldFolderName, tmpFolderName);
                         Directory.Move(tmpFolderName, newFolderName);
@@ -371,7 +383,7 @@ namespace FlickrMetadataSync
                             {
                                 foreach (string pictureFileName in tagCollection.GetValues(tag))
                                 {
-                                    if (pictureFileName.Replace(Path.GetFileName(pictureFileName), "").Replace(localFlickrDirectory, "").IndexOf(oldSetName) > -1)
+                                    if (getFolderName(pictureFileName).ToLower().Equals(oldSetName.ToLower()))
                                     {
                                         changeQueue.Add(tag, pictureFileName);
                                     }
@@ -395,7 +407,7 @@ namespace FlickrMetadataSync
                 }
 
                 populateTreeView();
-                setList.SelectedNode = setList.Nodes.Find(Path.Combine(localFlickrDirectory, newSetName), true)[0];
+                setList.SelectedNode = setList.Nodes.Find(newFolderName, true)[0];
             }
         }
 
@@ -583,7 +595,7 @@ namespace FlickrMetadataSync
 
                         foreach (string contentFileName in allTags.GetValues(oldTag))
                         {
-                            string setName = contentFileName.Replace(Path.GetDirectoryName(Path.GetDirectoryName(contentFileName)), "").Replace(Path.GetFileName(contentFileName), "").Replace("\\", "");
+                            string setName = getFolderName(contentFileName);
 
                             Content content = null;
                             if (isVideo(contentFileName))
@@ -897,7 +909,7 @@ namespace FlickrMetadataSync
 
                             saveAllTagsToDisk(allTags);
                             populateAllTagsListView();
- 
+
                             if (currentContent is Picture)
                             {
                                 Picture currentPicture = ((Picture)currentContent);
@@ -1735,18 +1747,18 @@ namespace FlickrMetadataSync
                 node.ToolTipText = "";
             }
 
-            foreach (string setName in setsWithIssues.AllKeys)
+            foreach (string setPath in setsWithIssues.AllKeys)
             {
                 string issuesThisSet = "";
-                foreach (string issue in setsWithIssues.GetValues(setName))
+                foreach (string issue in setsWithIssues.GetValues(setPath))
                 {
                     issuesThisSet += issue + "\r\n";
                 }
-                TreeNode[] nodes = setList.Nodes.Find(Path.Combine(localFlickrDirectory, setName), true);
+                TreeNode[] nodes = setList.Nodes.Find(setPath, true);
                 if (nodes.Length > 0)
                 {
                     TreeNode node = nodes[0];
-                    node.NodeFont = new Font(node.NodeFont, FontStyle.Bold);
+                    node.NodeFont = new Font(setList.Font.FontFamily, setList.Font.Size, FontStyle.Bold);
                     node.ToolTipText = issuesThisSet;
                 }
             }
@@ -2029,6 +2041,12 @@ namespace FlickrMetadataSync
             }
         }
 
+        private string getFolderName(string fullPath)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(Path.GetDirectoryName(fullPath));
+            return directoryInfo.Name;
+        }
+
         private void tagReader_DoWork(object sender, DoWorkEventArgs e)
         {
             StringCollection files = new StringCollection();
@@ -2048,13 +2066,16 @@ namespace FlickrMetadataSync
                 if (tagReader.CancellationPending)
                     return;
 
-                if (File.Exists(fileName))
+                //ignore hidden folders
+                DirectoryInfo directoryInfo = new DirectoryInfo(Path.GetDirectoryName(fileName));
+
+                if (File.Exists(fileName) && (directoryInfo.Attributes & FileAttributes.Hidden) != FileAttributes.Hidden)
                 {
                     lock (lock_tagReaderPause)
                     {
                         Content content = null;
                         string contentTitle = Path.GetFileName(fileName);
-                        string setName = fileName.Replace(contentTitle, "").Replace(localFlickrDirectory, "").Replace("\\", "");
+                        string setName = getFolderName(fileName);
 
                         int failCount = 0;
                         while (photosets == null)
@@ -2065,15 +2086,15 @@ namespace FlickrMetadataSync
                             Thread.Sleep(1000);
                             failCount++;
                         }
-
+                        
                         for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                         {
                             if (photosets.PhotosetCollection[i].Title.Equals(setName))
                             {
-                                Photo[] photosThisSet = flickr.PhotosetsGetPhotos(currentSetId).PhotoCollection;
+                                Photo[] photosThisSet = flickr.PhotosetsGetPhotos(photosets.PhotosetCollection[i].PhotosetId).PhotoCollection;
                                 for (int k = 0; k < photosThisSet.Length; k++)
                                 {
-                                    if (photosThisSet[k].Title.Equals(contentTitle))
+                                    if (photosThisSet[k].Title.Equals(Path.GetFileNameWithoutExtension(contentTitle)))
                                     {
                                         PhotoInfo photoInfo = flickr.PhotosGetInfo(photosThisSet[k].PhotoId);
                                         if (isVideo(fileName))
@@ -2094,7 +2115,7 @@ namespace FlickrMetadataSync
 
                         if (content == null)
                         {
-                            setsWithIssues.Add(setName, string.Format("{0} apparently doesn't exist in flickr.", contentTitle));
+                            setsWithIssues.Add(Path.GetDirectoryName(fileName), string.Format("{0} apparently doesn't exist in flickr.", contentTitle));
                         }
                         else if (isVideo(fileName))
                         {
@@ -2108,7 +2129,7 @@ namespace FlickrMetadataSync
                                 addTagIfNotAlreadyThere(tag, content, tagReaderTags);
                             }
                         }
-                        else 
+                        else
                         {
                             Picture picture = (Picture)content;
 
@@ -2126,11 +2147,11 @@ namespace FlickrMetadataSync
                                 }
                                 else
                                 {
-                                    setsWithIssues.Add(setName, string.Format("{0} has a zero-length tag.", contentTitle));
+                                    setsWithIssues.Add(Path.GetDirectoryName(fileName), string.Format("{0} has a zero-length tag.", contentTitle));
                                 }
                             }
                             if (!picture.dateTaken.HasValue)
-                                setsWithIssues.Add(setName, string.Format("{0} has no date taken.", contentTitle));
+                                setsWithIssues.Add(Path.GetDirectoryName(fileName), string.Format("{0} has no date taken.", contentTitle));
                         }
                     }
                 }
