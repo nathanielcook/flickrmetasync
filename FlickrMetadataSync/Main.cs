@@ -64,7 +64,7 @@ namespace FlickrMetadataSync
         private bool needToSetFocusToPictureList = false;
 
         //if you change this, make sure you update the sVideo function.
-        private string fileExtensions = "*.jpg;*.jpeg;*.avi;*.mov;*.mp4";
+        private string fileExtensions = "*.jpg;*.jpeg;*.avi;*.mov;*.mp4;*.3gp";
 
         public Main()
         {
@@ -593,7 +593,15 @@ namespace FlickrMetadataSync
                     {
                         Cursor.Current = Cursors.WaitCursor;
 
-                        foreach (string contentFileName in allTags.GetValues(oldTag))
+                        string[] values = allTags.GetValues(oldTag);
+
+                        allTags.Remove(oldTag);
+                        if (tagReader.IsBusy)
+                        {
+                            tagReaderTags.Remove(oldTag);
+                        }
+
+                        foreach (string contentFileName in values)
                         {
                             string setName = getFolderName(contentFileName);
 
@@ -633,14 +641,11 @@ namespace FlickrMetadataSync
                             }
                             //load flickr tags END ----------------------------
 
-                            //need some code here to make sure that newTag isn't already part of this picture
-                            containsTag(lstAllTags, ref newTag); // do this here to straighten out the capitalization
-
-                            //add this filename to allTags under the new key (tag)
                             addTagIfNotAlreadyThere(newTag, content, allTags);
-
                             if (tagReader.IsBusy)
+                            {
                                 addTagIfNotAlreadyThere(newTag, content, tagReaderTags);
+                            }
 
                             //local BEGIN: remove old tag, add new tag-----------------
                             if (content is Picture)
@@ -675,14 +680,11 @@ namespace FlickrMetadataSync
                                 mergeLocalInUI(Path.GetFileName(currentContent.filename));
                             }
                         }
-                        allTags.Remove(oldTag);
-
-                        if (tagReader.IsBusy)
-                            tagReaderTags.Remove(oldTag);
 
                         //update the ListView controls BEGIN -------------
                         lstAllTags.Items.Remove(item);
-                        if (!containsTag(lstAllTags, ref newTag))
+                        string copyOfNewTag = newTag;
+                        if (!containsTag(lstAllTags, ref copyOfNewTag))
                         {
                             lstAllTags.Items.Add(newTag, newTag, 0);
                         }
@@ -708,6 +710,11 @@ namespace FlickrMetadataSync
             {
                 e.SuppressKeyPress = true;
                 txtTag.Text = lstAllTags.SelectedItems[0].Text;
+                txtTag.Focus();
+                txtTag.SelectionStart = txtTag.Text.Length;
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
                 txtTag.Focus();
                 txtTag.SelectionStart = txtTag.Text.Length;
             }
@@ -784,19 +791,19 @@ namespace FlickrMetadataSync
                 {
                     Picture currentPicture = ((Picture)currentContent);
 
-                    // if exists in alltags remove from alltags
-                    removeTagIfThere(item.Text, currentPicture, allTags);
-                    if (tagReader.IsBusy)
-                    {
-                        // if tagreader is busy and exists in tagreader tags, remove from tagreader tags
-                        removeTagIfThere(item.Text, currentPicture, tagReaderTags);
-                    }
-
-                    removeTagFromLstAllTagsIfNeeded(item.Text);
-
                     currentPicture.tags.Remove(item.Text);
                     currentPicture.Save();
                 }
+
+                // if exists in alltags remove from alltags
+                removeTagIfThere(item.Text, currentContent, allTags);
+                if (tagReader.IsBusy)
+                {
+                    // if tagreader is busy and exists in tagreader tags, remove from tagreader tags
+                    removeTagIfThere(item.Text, currentContent, tagReaderTags);
+                }
+
+                removeTagFromLstAllTagsIfNeeded(item.Text);
 
                 if (currentContent.flickrTags != null)
                 {
@@ -994,9 +1001,9 @@ namespace FlickrMetadataSync
             return !foundIt; //returns true if it had to ADD the tag to the NameValueCollection.
         }
 
-        private void removeTagIfThere(string tag, Picture picture, NameValueCollection tagCollection)
+        private void removeTagIfThere(string tag, Content content, NameValueCollection tagCollection)
         {
-            string fileName = picture.filename;
+            string fileName = content.filename;
 
             if (tagCollection.GetValues(tag) != null)
             {
@@ -1466,7 +1473,7 @@ namespace FlickrMetadataSync
 
         private Boolean isVideo(string fileName)
         {
-            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith(".mov") || fileName.ToLower().EndsWith(".mp4"))
+            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith(".mov") || fileName.ToLower().EndsWith(".mp4") || fileName.ToLower().EndsWith(".3gp"))
                 return true;
             else
                 return false;
@@ -2086,31 +2093,38 @@ namespace FlickrMetadataSync
                             Thread.Sleep(1000);
                             failCount++;
                         }
-                        
-                        for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
+
+                        if (isVideo(fileName))
                         {
-                            if (photosets.PhotosetCollection[i].Title.Equals(setName))
+                            for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                             {
-                                Photo[] photosThisSet = flickr.PhotosetsGetPhotos(photosets.PhotosetCollection[i].PhotosetId).PhotoCollection;
-                                for (int k = 0; k < photosThisSet.Length; k++)
+                                if (photosets.PhotosetCollection[i].Title.Equals(setName))
                                 {
-                                    if (photosThisSet[k].Title.Equals(Path.GetFileNameWithoutExtension(contentTitle)))
+                                    Photo[] photosThisSet = flickr.PhotosetsGetPhotos(photosets.PhotosetCollection[i].PhotosetId).PhotoCollection;
+                                    for (int k = 0; k < photosThisSet.Length; k++)
                                     {
-                                        PhotoInfo photoInfo = flickr.PhotosGetInfo(photosThisSet[k].PhotoId);
-                                        if (isVideo(fileName))
+                                        if (photosThisSet[k].Title.Equals(Path.GetFileNameWithoutExtension(contentTitle)))
                                         {
-                                            content = new Video(fileName);
+                                            PhotoInfo photoInfo = flickr.PhotosGetInfo(photosThisSet[k].PhotoId);
+                                            if (isVideo(fileName))
+                                            {
+                                                content = new Video(fileName);
+                                            }
+                                            else
+                                            {
+                                                content = new Picture(fileName);
+                                            }
+                                            content.loadFlickrInfo(photoInfo);
+                                            break;
                                         }
-                                        else
-                                        {
-                                            content = new Picture(fileName);
-                                        }
-                                        content.loadFlickrInfo(photoInfo);
-                                        break;
                                     }
+                                    break;
                                 }
-                                break;
                             }
+                        }
+                        else
+                        {
+                            content = new Picture(fileName);
                         }
 
                         if (content == null)
@@ -2227,7 +2241,10 @@ namespace FlickrMetadataSync
                     }
                     finally
                     {
-                        mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                        if (pictureList.SelectedItems.Count > 0)
+                        {
+                            mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                        }
                         Cursor.Current = Cursors.Default;
                         pictureList.Focus();
                     }
@@ -2510,13 +2527,14 @@ namespace FlickrMetadataSync
                         picture.tags.Remove(tag);
                         picture.Save();
                     }
-
-                    removeTagIfThere(tag, picture, allTags);
-                    if (tagReader.IsBusy)
-                        removeTagIfThere(tag, picture, tagReaderTags);
-
-                    removeTagFromLstAllTagsIfNeeded(tag);
                 }
+
+                removeTagIfThere(tag, content, allTags);
+                if (tagReader.IsBusy)
+                    removeTagIfThere(tag, content, tagReaderTags);
+
+                removeTagFromLstAllTagsIfNeeded(tag);
+
                 //local END-------------------------------------------------------------------------
 
                 //flickr BEGIN----------------------------------------------------------------------
