@@ -41,7 +41,7 @@ namespace FlickrMetadataSync
         public StringCollection tags;
         public EXIF_ORIENTATION orientation = EXIF_ORIENTATION.Normal;
 
-        static object fileAccess = new object();
+        private static object fileAccess = new object();
 
         public Picture(string filename)
         {
