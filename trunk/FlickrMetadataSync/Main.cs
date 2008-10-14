@@ -1534,7 +1534,11 @@ namespace FlickrMetadataSync
 
                 //load picture
                 RotateFlipType rotateFlipType;
-                Image image = Image.FromFile(currentPicture.filename);
+                Image image;
+                using (FileStream fileStream = new FileStream(currentPicture.filename, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                {
+                    image = Image.FromStream(fileStream);
+                }
                 switch (currentPicture.orientation)
                 {
                     case EXIF_ORIENTATION.Clockwise90:
@@ -1552,7 +1556,7 @@ namespace FlickrMetadataSync
                 }
                 pictureBox.Image = image;
                 pictureBox.Image.RotateFlip(rotateFlipType);
-                
+
                 axWMP.Visible = false;
                 pnlPictureBox.Visible = true;
 
