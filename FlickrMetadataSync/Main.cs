@@ -282,15 +282,18 @@ namespace FlickrMetadataSync
                         }
                     }
 
-                    //get flickr tags
-                    PhotoInfo photoInfo = flickr.PhotosGetInfo(content.flickrID);
-                    foreach (PhotoInfoTag photoInfoTag in photoInfo.Tags.TagCollection)
+                    if (content.flickrID != null)
                     {
-                        string tag = photoInfoTag.Raw;
-                        if (!copiedSoFar.Contains(tag))
+                        //get flickr tags
+                        PhotoInfo photoInfo = flickr.PhotosGetInfo(content.flickrID);
+                        foreach (PhotoInfoTag photoInfoTag in photoInfo.Tags.TagCollection)
                         {
-                            clipboardText += tag + "\r\n";
-                            copiedSoFar.Add(tag);
+                            string tag = photoInfoTag.Raw;
+                            if (!copiedSoFar.Contains(tag))
+                            {
+                                clipboardText += tag + "\r\n";
+                                copiedSoFar.Add(tag);
+                            }
                         }
                     }
                 }
@@ -1173,10 +1176,10 @@ namespace FlickrMetadataSync
                 e.SuppressKeyPress = true;
                 SendKeys.Send("{DOWN}");
             }
-            else if (e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
-            {
-                txtPictureCaption.Focus();
-            }
+            //else if (e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
+            //{
+            //    txtPictureCaption.Focus();
+            //}
             else if (e.KeyCode >= Keys.D0 & e.KeyCode <= Keys.D9)
             {
                 e.SuppressKeyPress = true;
@@ -1886,7 +1889,7 @@ namespace FlickrMetadataSync
                 //tags (merge)
                 foreach (string tag in currentPicture.flickrTags)
                 {
-                    if (!currentPicture.tags.Contains(tag))
+                    if (!currentPicture.tags.Contains(tag) && !tag.Contains("?"))
                     {
                         //assume that the tag is already compliant with the capitalization
                         string copyOfTag = tag;
