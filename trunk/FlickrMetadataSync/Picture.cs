@@ -83,12 +83,11 @@ namespace FlickrMetadataSync
 
                         //the rest is all gps stuff
                         byte[] gpsVersionNumbers = bitmapMetadata.GetQuery(GPS_VERSION_QUERY) as byte[];
-                        bool strangeVersion = (gpsVersionNumbers != null && gpsVersionNumbers[0] == 2);
 
                         ulong[] latitudes = bitmapMetadata.GetQuery(LATITUDE_QUERY) as ulong[];
                         if (latitudes != null)
                         {
-                            double latitude = ConvertCoordinate(latitudes, strangeVersion);
+                            double latitude = ConvertCoordinate(latitudes);
 
                             // N or S
                             string northOrSouth = (string)bitmapMetadata.GetQuery(NORTH_OR_SOUTH_QUERY);
@@ -103,7 +102,7 @@ namespace FlickrMetadataSync
                         ulong[] longitudes = bitmapMetadata.GetQuery(LONGITUDE_QUERY) as ulong[];
                         if (longitudes != null)
                         {
-                            double longitude = ConvertCoordinate(longitudes, strangeVersion);
+                            double longitude = ConvertCoordinate(longitudes);
 
                             // E or W
                             string eastOrWest = (string)bitmapMetadata.GetQuery(EAST_OR_WEST_QUERY);
@@ -343,27 +342,17 @@ namespace FlickrMetadataSync
             }
         }
 
-        private double ConvertCoordinate(ulong[] coordinates, bool strangeVersion)
+        private double ConvertCoordinate(ulong[] coordinates)
         {
             int degrees;
             int minutes;
             double seconds;
 
-            if (strangeVersion)
-            {
-                degrees = (int)splitLongAndDivide(coordinates[0]);
-                minutes = (int)splitLongAndDivide(coordinates[1]);
-                seconds = splitLongAndDivide(coordinates[2]);
-            }
-            else
-            {
-                degrees = (int)(coordinates[0] - DEGREES_OFFSET);
-                minutes = (int)(coordinates[1] - MINUTES_OFFSET);
-                seconds = (double)(coordinates[2] - SECONDS_OFFSET) / 100.0;
-            }
+            degrees = (int)splitLongAndDivide(coordinates[0]);
+            minutes = (int)splitLongAndDivide(coordinates[1]);
+            seconds = splitLongAndDivide(coordinates[2]);
 
             double coordinate = degrees + (minutes / 60.0) + (seconds / 3600);
-
             double roundedCoordinate = Math.Floor(coordinate * COORDINATE_ROUNDING_FACTOR) / COORDINATE_ROUNDING_FACTOR;
 
             return roundedCoordinate;
