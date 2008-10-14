@@ -1533,8 +1533,26 @@ namespace FlickrMetadataSync
                 loadFlickrPhotoId();
 
                 //load picture
-                pictureBox.ImageLocation = currentPicture.filename;
-
+                RotateFlipType rotateFlipType;
+                Image image = Image.FromFile(currentPicture.filename);
+                switch (currentPicture.orientation)
+                {
+                    case EXIF_ORIENTATION.Clockwise90:
+                        rotateFlipType = RotateFlipType.Rotate90FlipNone;
+                        break;
+                    case EXIF_ORIENTATION.Clockwise180:
+                        rotateFlipType = RotateFlipType.Rotate180FlipNone;
+                        break;
+                    case EXIF_ORIENTATION.Clockwise270:
+                        rotateFlipType = RotateFlipType.Rotate270FlipNone;
+                        break;
+                    default:
+                        rotateFlipType = RotateFlipType.RotateNoneFlipNone;
+                        break;
+                }
+                pictureBox.Image = image;
+                pictureBox.Image.RotateFlip(rotateFlipType);
+                
                 axWMP.Visible = false;
                 pnlPictureBox.Visible = true;
 

@@ -9,6 +9,29 @@ using FlickrNet;
 
 namespace FlickrMetadataSync
 {
+    public enum EXIF_ORIENTATION
+    {
+        None = 0,
+        Normal = 1,
+        Mirror = 2,
+        MirrorAndFlip = 3,
+        Flip = 4,
+        FlipAndClockwise90 = 5,
+        Clockwise90 = 6,
+        Clockwise180 = 7,
+        Clockwise270 = 8
+
+        //From http://www.exif.org/Exif2-2.PDF
+        //1 = The 0th row is at the visual top of the image, and the 0th column is the visual left-hand side.
+        //2 = The 0th row is at the visual top of the image, and the 0th column is the visual right-hand side.
+        //3 = The 0th row is at the visual bottom of the image, and the 0th column is the visual right-hand side.
+        //4 = The 0th row is at the visual bottom of the image, and the 0th column is the visual left-hand side.
+        //5 = The 0th row is the visual left-hand side of the image, and the 0th column is the visual top.
+        //6 = The 0th row is the visual right-hand side of the image, and the 0th column is the visual top.
+        //7 = The 0th row is the visual right-hand side of the image, and the 0th column is the visual bottom.
+        //8 = The 0th row is the visual left-hand side of the image, and the 0th column is the visual bottom.        
+    }
+
     public class Picture : Content
     {
         public string caption;
@@ -16,8 +39,9 @@ namespace FlickrMetadataSync
         public double? gpsLatitude;
         public double? gpsLongitude;
         public StringCollection tags;
+        public EXIF_ORIENTATION orientation = EXIF_ORIENTATION.Normal;
 
-        private static object fileAccess = new object();
+        static object fileAccess = new object();
 
         public Picture(string filename)
         {
@@ -33,6 +57,11 @@ namespace FlickrMetadataSync
 
                     if (bitmapMetadata != null)
                     {
+                        if (bitmapMetadata.GetQuery(EXIF_ORIENTATION_QUERY) != null)
+                        {
+                            orientation = (EXIF_ORIENTATION)Enum.Parse(typeof(EXIF_ORIENTATION), bitmapMetadata.GetQuery(EXIF_ORIENTATION_QUERY).ToString());
+                        }
+
                         //pictureMetadata.Title = bitmapMetadata.Title;
                         if (bitmapMetadata.Comment != null && bitmapMetadata.Comment.Length > 0)
                         {
@@ -377,6 +406,7 @@ namespace FlickrMetadataSync
         private const string EAST_OR_WEST_QUERY = "/app1/ifd/gps/subifd:{char=3}";
         private const string GPS_VERSION_QUERY = "/app1/ifd/gps/";
         private const string IPTC_KEYWORDS_QUERY = "/app13/irb/8bimiptc/iptc/keywords";
+        private const string EXIF_ORIENTATION_QUERY = "/app1/ifd/{ushort=274}";
         private const long DEGREES_OFFSET = 0x100000000;
         private const long MINUTES_OFFSET = 0x100000000;
         private const long SECONDS_OFFSET = 0x6400000000;
