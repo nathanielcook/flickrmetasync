@@ -1176,10 +1176,11 @@ namespace FlickrMetadataSync
                 e.SuppressKeyPress = true;
                 SendKeys.Send("{DOWN}");
             }
-            //else if (e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
-            //{
-            //    txtPictureCaption.Focus();
-            //}
+            else if (e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
+            {
+                foreach (ListViewItem item in pictureList.Items)
+                    item.Selected = true;
+            }
             else if (e.KeyCode >= Keys.D0 & e.KeyCode <= Keys.D9)
             {
                 e.SuppressKeyPress = true;
@@ -2302,14 +2303,26 @@ namespace FlickrMetadataSync
         {
             foreach (ListViewItem item in items)
             {
-                Picture picture = new Picture(Path.Combine(setList.SelectedNode.Name, item.Text));
-                picture.dateTaken = calDateTaken.SelectionStart;
-                picture.Save();
+                string contentFileName = Path.Combine(setList.SelectedNode.Name, item.Text);
+                Content content;
 
-                picture.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(picture.filename)];
-                if (picture.flickrID != null)
+                if (isVideo(contentFileName))
                 {
-                    flickr.PhotosSetDates(picture.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
+                    content = new Video(contentFileName);
+                }
+                else
+                {
+                    content = new Picture(contentFileName);
+
+                    Picture picture = (Picture)content;
+                    picture.dateTaken = calDateTaken.SelectionStart;
+                    picture.Save();
+                }
+
+                content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+                if (content.flickrID != null)
+                {
+                    flickr.PhotosSetDates(content.flickrID, calDateTaken.SelectionStart, DateGranularity.FullDate);
                 }
             }
         }
@@ -2398,7 +2411,8 @@ namespace FlickrMetadataSync
                 else if (content.flickrID == null)
                 {
                     //the set is in flickr, but this particular picture isn't. Throw an exception.
-                    throw new Exception("Set is in flickr, but picture isn't?");
+                    //throw new Exception("Set is in flickr, but picture isn't?");
+                    MessageBox.Show(string.Format("FYI, this set is in flickr, but the picture {0} isn't (or isn't found in that set).", Path.GetFileName(content.filename)));
                 }
                 else
                 {
@@ -2572,7 +2586,7 @@ namespace FlickrMetadataSync
                 else if (content.flickrID == null)
                 {
                     //the set is in flickr, but this particular picture isn't. Throw an exception.
-                    throw new Exception("Set is in flickr, but picture isn't?");
+                    MessageBox.Show(string.Format("FYI, this set is in flickr, but the picture {0} isn't (or isn't found in that set).", Path.GetFileName(content.filename)));
                 }
                 else
                 {

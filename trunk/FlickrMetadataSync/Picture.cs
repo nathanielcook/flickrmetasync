@@ -263,9 +263,14 @@ namespace FlickrMetadataSync
             }
         }
 
-        private static ulong[] ConvertCoordinate(double coordinate)
+        private ulong[] ConvertCoordinate(double coordinate)
         {
-            ulong[] coordinates = new ulong[3];
+            //capture as many decimal places as possible for the degrees
+            const uint _DegreesDenominator = 1000000;
+            const double _SecondsRoundingFactor = 1000.0;
+
+            ulong[] oldStyleCoordinates = new ulong[3];
+            ulong[] newStyleCoordinates = new ulong[3];
 
             // Make sure coordinate is positive.
             coordinate = Math.Abs(coordinate);
@@ -278,13 +283,37 @@ namespace FlickrMetadataSync
 
             coordinate -= (minutes / 60.0);
 
-            double seconds = Math.Floor(coordinate * 3600.0);
+            double seconds = Math.Round(coordinate * 3600.0 * _SecondsRoundingFactor) / _SecondsRoundingFactor;
 
-            coordinates[0] = Convert.ToUInt64(degrees + DEGREES_OFFSET);
-            coordinates[1] = Convert.ToUInt64(minutes + MINUTES_OFFSET);
-            coordinates[2] = Convert.ToUInt64((seconds * 100.0) + SECONDS_OFFSET);
+            oldStyleCoordinates[0] = Convert.ToUInt64(degrees + DEGREES_OFFSET);
+            oldStyleCoordinates[1] = Convert.ToUInt64(minutes + MINUTES_OFFSET);
+            oldStyleCoordinates[2] = Convert.ToUInt64((seconds * 100.0) + SECONDS_OFFSET);
 
-            return coordinates;
+            newStyleCoordinates[0] = EncodeExifCoordinatePart(degrees, 1);
+            newStyleCoordinates[1] = EncodeExifCoordinatePart(minutes, 1);
+            newStyleCoordinates[2] = EncodeExifCoordinatePart(seconds, _DegreesDenominator);
+
+            if (Math.Round(ConvertCoordinate(oldStyleCoordinates), 4, MidpointRounding.AwayFromZero) != Math.Round(ConvertCoordinate(newStyleCoordinates), 4, MidpointRounding.AwayFromZero))
+                throw new Exception("Possible GPS calculation error?");
+
+            return newStyleCoordinates;
+        }
+
+        private ulong EncodeExifCoordinatePart(double coordinatePart, uint denominator)
+        {
+            byte[] coordinatePartBytes = new byte[8];
+
+            uint numerator = (uint)(coordinatePart * denominator);
+
+            byte[] numeratorBytes = BitConverter.GetBytes(numerator);
+            byte[] denominatorBytes = BitConverter.GetBytes(denominator);
+
+            numeratorBytes.CopyTo(coordinatePartBytes, 0);
+            denominatorBytes.CopyTo(coordinatePartBytes, 4);
+
+            ulong encodedCoordinatePart = BitConverter.ToUInt64(coordinatePartBytes, 0);
+
+            return encodedCoordinatePart;
         }
 
         private void WriteCopyOfPictureUsingWic(string originalFileName, string outputFileName)
@@ -381,13 +410,13 @@ namespace FlickrMetadataSync
             minutes = (int)splitLongAndDivide(coordinates[1]);
             seconds = splitLongAndDivide(coordinates[2]);
 
-            double coordinate = degrees + (minutes / 60.0) + (seconds / 3600);
+            double coordinate = (double)degrees + (minutes / 60.0) + (seconds / 3600.0);
             double roundedCoordinate = Math.Floor(coordinate * COORDINATE_ROUNDING_FACTOR) / COORDINATE_ROUNDING_FACTOR;
 
             return roundedCoordinate;
         }
 
-        private static double splitLongAndDivide(ulong number)
+        private double splitLongAndDivide(ulong number)
         {
             byte[] bytes = BitConverter.GetBytes(number);
             int int1 = BitConverter.ToInt32(bytes, 0);
