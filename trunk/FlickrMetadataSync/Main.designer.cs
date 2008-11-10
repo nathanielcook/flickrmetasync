@@ -30,7 +30,7 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
@@ -44,7 +44,7 @@ namespace FlickrMetadataSync
             this.pasteTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setDateTakenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pasteGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstTags = new System.Windows.Forms.ListView();
             this.lblGeotag = new System.Windows.Forms.Label();
             this.txtPictureCaption = new System.Windows.Forms.TextBox();
@@ -118,12 +118,12 @@ namespace FlickrMetadataSync
             this.makePublicToolStripMenuItem,
             this.makePrivateToolStripMenuItem,
             this.copyTagsToolStripMenuItem,
+            this.copyGeoTagToolStripMenuItem,
             this.pasteTagsToolStripMenuItem,
             this.setDateTakenToolStripMenuItem,
-            this.copyGeoTagToolStripMenuItem,
-            this.pasteGeoTagToolStripMenuItem});
+            this.setGeoTagToolStripMenuItem});
             this.mnuSelected.Name = "mnuSelected";
-            this.mnuSelected.Size = new System.Drawing.Size(207, 202);
+            this.mnuSelected.Size = new System.Drawing.Size(207, 224);
             // 
             // addTagToSelectedMenuItem
             // 
@@ -175,11 +175,11 @@ namespace FlickrMetadataSync
             this.copyGeoTagToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
             this.copyGeoTagToolStripMenuItem.Text = "Copy GeoTag";
             // 
-            // pasteGeoTagToolStripMenuItem
+            // setGeoTagToolStripMenuItem
             // 
-            this.pasteGeoTagToolStripMenuItem.Name = "pasteGeoTagToolStripMenuItem";
-            this.pasteGeoTagToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
-            this.pasteGeoTagToolStripMenuItem.Text = "Paste GeoTag";
+            this.setGeoTagToolStripMenuItem.Name = "setGeoTagToolStripMenuItem";
+            this.setGeoTagToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.setGeoTagToolStripMenuItem.Text = "Set Geo Tag";
             // 
             // lstTags
             // 
@@ -187,7 +187,7 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem2});
             this.lstTags.Location = new System.Drawing.Point(292, 159);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 112);
@@ -636,7 +636,7 @@ namespace FlickrMetadataSync
         private ToolStripMenuItem setDateTakenToolStripMenuItem;
         private ToolStripMenuItem sortSetsOnFlickrToolStripMenuItem;
         private ToolStripMenuItem copyGeoTagToolStripMenuItem;
-        private ToolStripMenuItem pasteGeoTagToolStripMenuItem;
+        private ToolStripMenuItem setGeoTagToolStripMenuItem;
     }
 }
 

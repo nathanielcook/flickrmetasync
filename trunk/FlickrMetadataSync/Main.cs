@@ -63,8 +63,10 @@ namespace FlickrMetadataSync
         private static object lock_tagReaderPause = new object();
         private bool needToSetFocusToPictureList = false;
 
-        //if you change this, make sure you update the sVideo function.
-        private string fileExtensions = "*.jpg;*.jpeg;*.avi;*.mov;*.mp4;*.3gp";
+        private static object lock_loadingFlickrID = new object();
+
+        //if you change this, make sure you update the isVideo function.
+        private string fileExtensions = "*.jpg;*.jpeg;*.avi;*.mov;*.mp4;*.mpg;*.3gp";
 
         public Main()
         {
@@ -114,7 +116,7 @@ namespace FlickrMetadataSync
             this.setDateTakenToolStripMenuItem.Click += new EventHandler(setDateTakenToolStripMenuItem_Click);
             this.sortSetsOnFlickrToolStripMenuItem.Click += new EventHandler(sortSetsOnFlickrToolStripMenuItem_Click);
             this.copyGeoTagToolStripMenuItem.Click += new EventHandler(copyGeoTagToolStripMenuItem_Click);
-            this.pasteGeoTagToolStripMenuItem.Click += new EventHandler(pasteGeoTagToolStripMenuItem_Click);
+            this.setGeoTagToolStripMenuItem.Click += new EventHandler(setGeoTagToolStripMenuItem_Click);
 
             //get flickr authorization token
             loadAuthToken();
@@ -141,17 +143,62 @@ namespace FlickrMetadataSync
             }
         }
 
-        void pasteGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         void copyGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Cursor.Current = Cursors.WaitCursor;
+
+            string clipboardText = "";
+            StringCollection copiedSoFar = new StringCollection();
+
+            if (pictureList.SelectedItems.Count > 1)
+            {
+                MessageBox.Show("You can only copy one geotag at a time.");
+            }
+            else if (pictureList.SelectedItems.Count == 1)
+            {
+                ListViewItem item = pictureList.SelectedItems[0];
+
+                string fullFilePath = Path.Combine(setList.SelectedNode.Name, item.Text);
+
+                Content content;
+                if (isVideo(item.Text))
+                    content = new Video(fullFilePath);
+                else
+                    content = new Picture(fullFilePath);
+
+                content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+
+                if (content is Picture)
+                {
+                    Picture picture = (Picture)content;
+
+                    if (picture.gpsLatitude.HasValue && picture.gpsLongitude.HasValue)
+                    {
+                        clipboardText = buildGPSClipboardText(picture.gpsLatitude, picture.gpsLongitude);
+                    }
+                }
+
+                if (clipboardText == "" && content.flickrGpsLatitude.HasValue && content.flickrGpsLongitude.HasValue)
+                {
+                    clipboardText = buildGPSClipboardText(content.flickrGpsLatitude, content.flickrGpsLongitude);
+                }
+
+                Clipboard.SetText(clipboardText, TextDataFormat.Text);
+            }
+
+            Cursor.Current = Cursors.Default;
         }
 
-        void setDateTakenToolStripMenuItem_Click(object sender, EventArgs e)
+        private string buildGPSClipboardText(double? latitude, double? longitude)
+        {
+            string clipboardText;
+            clipboardText = Application.ProductName + "GPS" + "\r\n";
+            clipboardText = latitude.ToString() + "\r\n";
+            clipboardText = longitude.ToString();
+            return clipboardText;
+        }
+
+        private void setDateTakenToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show(string.Format("Are you sure you want to set the date for all selected items to {0:F}? This will take place immediately on flickr too.", dtpDateTaken.Value), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
             {
@@ -950,7 +997,11 @@ namespace FlickrMetadataSync
 
                         } //if (!containsTag(lstTags, ref tag))
 
+                        //remove event subscription for performance boost
+                        txtTag.TextChanged -= txtTag_TextChanged;
                         txtTag.Clear();
+                        txtTag.TextChanged += txtTag_TextChanged;
+
                         pictureList.Select();
 
                     } //if (currentcontent is Picture || (currentContent is Video && currentContent.flickrLoaded))
@@ -1056,7 +1107,19 @@ namespace FlickrMetadataSync
             {
                 e.SuppressKeyPress = true;
 
-                if (!isVideo(currentContent.filename))
+                if (isVideo(currentContent.filename))
+                {
+                    if (txtPictureCaption.Text.Equals("") && (currentContent.flickrCaption == null || currentContent.flickrCaption.Equals("")))
+                    {
+                        //do nothing
+                    }
+                    else if (!txtPictureCaption.Text.Equals(currentContent.flickrCaption))
+                    {
+                        currentContent.flickrCaption = txtPictureCaption.Text.Trim();
+                        flickr.PhotosSetMeta(currentContent.flickrID, currentContent.flickrTitle, currentContent.flickrCaption);
+                    }
+                }
+                else
                 {
                     Picture picture = (Picture)currentContent;
 
@@ -1477,7 +1540,7 @@ namespace FlickrMetadataSync
 
         private Boolean isVideo(string fileName)
         {
-            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith(".mov") || fileName.ToLower().EndsWith(".mp4") || fileName.ToLower().EndsWith(".3gp"))
+            if (fileName.ToLower().EndsWith(".avi") || fileName.ToLower().EndsWith(".mov") || fileName.ToLower().EndsWith(".mp4") || fileName.ToLower().EndsWith(".mpg") || fileName.ToLower().EndsWith(".3gp"))
                 return true;
             else
                 return false;
@@ -1512,13 +1575,19 @@ namespace FlickrMetadataSync
 
             if (isVideo(selectedItemText))
             {
-                currentContent = new Video(fullFilePath);
+                lock (lock_loadingFlickrID)
+                {
+                    currentContent = new Video(fullFilePath);
+                }
 
                 //just use the file created date as the date taken.
                 calDateTaken.SetDate(File.GetCreationTime(fullFilePath));
 
-                //load video
-                axWMP.URL = fullFilePath;
+                if (!fullFilePath.ToUpper().EndsWith(".MOV"))
+                {
+                    //load video
+                    axWMP.URL = fullFilePath;
+                }
 
                 axWMP.Visible = true;
                 pnlPictureBox.Visible = false;
@@ -1528,10 +1597,19 @@ namespace FlickrMetadataSync
                 axWMP.Ctlcontrols.stop();
                 axWMP.URL = null;
 
-                currentContent = new Picture(fullFilePath);
+                lock (lock_loadingFlickrID)
+                {
+                    currentContent = new Picture(fullFilePath);
+                }
+
                 Picture currentPicture = ((Picture)currentContent);
 
                 loadFlickrPhotoId();
+
+                //Comment this out because it creates a timing issue. 
+                //However, it does look better if it's uncommented so 
+                //troubleshoot this issue when you get time.
+                //Application.DoEvents();
 
                 //load picture
                 RotateFlipType rotateFlipType;
@@ -1609,7 +1687,6 @@ namespace FlickrMetadataSync
                 picturesDictionary.Clear();
                 currentSetName = "";
                 currentSetId = "";
-                //currentContent = null;
 
                 for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                 {
@@ -1799,11 +1876,15 @@ namespace FlickrMetadataSync
 
         private void populateAllTagsListView()
         {
+            lstAllTags.BeginUpdate();
+
             lstAllTags.Clear();
             foreach (string tag in allTags)
             {
                 lstAllTags.Items.Add(tag, tag, 0);
             }
+
+            lstAllTags.EndUpdate();
         }
 
         private void mergeFlickrInUI()
@@ -2043,6 +2124,8 @@ namespace FlickrMetadataSync
                 lblGeotag.Text = geoTag;
                 lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
 
+                txtPictureCaption.Text = currentContent.flickrCaption;
+
                 currentContent.flickrMergedInUI = true;
             }
         }
@@ -2065,11 +2148,14 @@ namespace FlickrMetadataSync
 
         private void loadFlickrPhotoId()
         {
-            if (currentSetName == selectedNodeName && currentContent != null && currentContent.flickrID == null)
+            lock (lock_loadingFlickrID)
             {
-                if (picturesDictionary.ContainsKey(Path.GetFileNameWithoutExtension(currentContent.filename)))
+                if (currentSetName == selectedNodeName && currentContent != null && currentContent.flickrID == null)
                 {
-                    currentContent.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(currentContent.filename)];
+                    if (picturesDictionary.ContainsKey(Path.GetFileNameWithoutExtension(currentContent.filename)))
+                    {
+                        currentContent.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(currentContent.filename)];
+                    }
                 }
             }
         }
@@ -2826,6 +2912,100 @@ namespace FlickrMetadataSync
             } // are you sure you want to change this tag?
 
             pictureList.Select();
+        }
+
+        private void setGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            double? latitude = null;
+            double? longitude = null;
+
+            ListViewItem item = pictureList.FocusedItem;
+            string fullFilePath = Path.Combine(setList.SelectedNode.Name, item.Text);
+
+            Content content;
+            if (isVideo(item.Text))
+                content = new Video(fullFilePath);
+            else
+                content = new Picture(fullFilePath);
+
+            content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+
+            if (content is Picture)
+            {
+                Picture picture = (Picture)content;
+
+                if (picture.gpsLatitude.HasValue && picture.gpsLongitude.HasValue)
+                {
+                    latitude = picture.gpsLatitude.Value;
+                    longitude = picture.gpsLongitude.Value;
+                }
+            }
+
+            if (!latitude.HasValue || !longitude.HasValue)
+            {
+                PhotoInfo photoInfo = flickr.PhotosGetInfo(currentContent.flickrID);
+                content.loadFlickrInfo(photoInfo);
+
+                if (photoInfo.Title.Equals(Path.GetFileNameWithoutExtension(fullFilePath)))
+                {
+                    if (content.flickrGpsLatitude.HasValue && content.flickrGpsLongitude.HasValue)
+                    {
+                        latitude = content.flickrGpsLatitude.Value;
+                        longitude = content.flickrGpsLongitude.Value;
+                    }
+                }
+            }
+
+            if (!latitude.HasValue || !longitude.HasValue)
+            {
+                MessageBox.Show("The focused item does not have geo tag information.");
+            }
+            else if (MessageBox.Show(string.Format("Are you sure you want to set the geotag for all selected items to {0}, {1}? This will take place immediately on flickr too.", latitude, longitude), Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+            {
+                if (MessageBox.Show("Are you sure? This is for all selected items!", Application.ProductName, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                {
+                    try
+                    {
+                        Cursor.Current = Cursors.WaitCursor;
+                        setGeoTagForAllItems(pictureList.SelectedItems, latitude.Value, longitude.Value);
+                    }
+                    finally
+                    {
+                        mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                        Cursor.Current = Cursors.Default;
+                        pictureList.Focus();
+                    }
+                }
+            }
+        }
+
+        private void setGeoTagForAllItems(ICollection items, double latitude, double longitude)
+        {
+            foreach (ListViewItem item in items)
+            {
+                string contentFileName = Path.Combine(setList.SelectedNode.Name, item.Text);
+                Content content;
+
+                if (isVideo(contentFileName))
+                {
+                    content = new Video(contentFileName);
+                }
+                else
+                {
+                    content = new Picture(contentFileName);
+
+                    Picture picture = (Picture)content;
+                    picture.gpsLatitude = latitude;
+                    picture.gpsLongitude = longitude;
+                    picture.Save();
+                }
+
+                content.flickrID = picturesDictionary[Path.GetFileNameWithoutExtension(content.filename)];
+                if (content.flickrID != null)
+                {
+                    flickr.PhotosGeoSetLocation(content.flickrID, latitude, longitude);
+                }
+            }
         }
     }
 }
