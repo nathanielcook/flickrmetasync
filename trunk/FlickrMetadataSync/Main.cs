@@ -367,6 +367,7 @@ namespace FlickrMetadataSync
         private void renameSet()
         {
             axWMP.URL = null;
+            axQTP.URL = null;
             string thisSetID = currentSetId;
             string oldSetName = setList.SelectedNode.Text;
             string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, oldSetName);
@@ -1583,19 +1584,28 @@ namespace FlickrMetadataSync
                 //just use the file created date as the date taken.
                 calDateTaken.SetDate(File.GetCreationTime(fullFilePath));
 
-                if (!fullFilePath.ToUpper().EndsWith(".MOV"))
-                {
-                    //load video
-                    axWMP.URL = fullFilePath;
-                }
-
-                axWMP.Visible = true;
+                UnloadMoviePlayers();
                 pnlPictureBox.Visible = false;
+
+                //load video
+                if (fullFilePath.ToUpper().EndsWith(".MOV"))
+                {                   
+                    axQTP.URL = fullFilePath;
+                    axQTP.Visible = true;
+                    axWMP.Visible = false;
+
+                    axQTP.Movie.Play(1);
+                }
+                else
+                {
+                    axWMP.URL = fullFilePath;
+                    axWMP.Visible = true;
+                    axQTP.Visible = false;
+                }
             }
             else
             {
-                axWMP.Ctlcontrols.stop();
-                axWMP.URL = null;
+                UnloadMoviePlayers();
 
                 lock (lock_loadingFlickrID)
                 {
@@ -1637,6 +1647,7 @@ namespace FlickrMetadataSync
                 pictureBox.Image.RotateFlip(rotateFlipType);
 
                 axWMP.Visible = false;
+                axQTP.Visible = false;
                 pnlPictureBox.Visible = true;
 
                 //load caption
@@ -1667,6 +1678,21 @@ namespace FlickrMetadataSync
                     geoTag += "long " + currentPicture.gpsLongitude.ToString();
                 lblGeotag.Text = geoTag;
             }
+        }
+
+        private void UnloadMoviePlayers()
+        {
+            if (axQTP.Movie != null)
+            {
+                axQTP.Movie.Stop();
+                axQTP.URL = string.Empty;
+            }
+
+            axWMP.Ctlcontrols.stop();
+            axWMP.URL = null;
+
+            axQTP.Visible = false;
+            axWMP.Visible = false;
         }
 
         private void flickrGopher_DoWork(object sender, DoWorkEventArgs e)

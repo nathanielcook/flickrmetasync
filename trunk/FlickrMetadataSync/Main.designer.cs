@@ -30,7 +30,7 @@ namespace FlickrMetadataSync
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("testing");
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("testing");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.folderPicker = new System.Windows.Forms.FolderBrowserDialog();
@@ -41,9 +41,9 @@ namespace FlickrMetadataSync
             this.makePublicToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.makePrivateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pasteTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setDateTakenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.copyGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstTags = new System.Windows.Forms.ListView();
             this.lblGeotag = new System.Windows.Forms.Label();
@@ -82,6 +82,7 @@ namespace FlickrMetadataSync
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.dtpDateTaken = new System.Windows.Forms.DateTimePicker();
             this.btnReUpload = new System.Windows.Forms.Button();
+            this.axQTP = new AxQTOControlLib.AxQTControl();
             this.mnuSelected.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -91,6 +92,7 @@ namespace FlickrMetadataSync
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).BeginInit();
             this.pnlPictureBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axQTP)).BeginInit();
             this.SuspendLayout();
             // 
             // timer1
@@ -123,7 +125,7 @@ namespace FlickrMetadataSync
             this.setDateTakenToolStripMenuItem,
             this.setGeoTagToolStripMenuItem});
             this.mnuSelected.Name = "mnuSelected";
-            this.mnuSelected.Size = new System.Drawing.Size(207, 224);
+            this.mnuSelected.Size = new System.Drawing.Size(207, 202);
             // 
             // addTagToSelectedMenuItem
             // 
@@ -156,6 +158,12 @@ namespace FlickrMetadataSync
             this.copyTagsToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
             this.copyTagsToolStripMenuItem.Text = "Copy Tags";
             // 
+            // copyGeoTagToolStripMenuItem
+            // 
+            this.copyGeoTagToolStripMenuItem.Name = "copyGeoTagToolStripMenuItem";
+            this.copyGeoTagToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.copyGeoTagToolStripMenuItem.Text = "Copy GeoTag";
+            // 
             // pasteTagsToolStripMenuItem
             // 
             this.pasteTagsToolStripMenuItem.Name = "pasteTagsToolStripMenuItem";
@@ -169,12 +177,6 @@ namespace FlickrMetadataSync
             this.setDateTakenToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
             this.setDateTakenToolStripMenuItem.Text = "Set Date Taken";
             // 
-            // copyGeoTagToolStripMenuItem
-            // 
-            this.copyGeoTagToolStripMenuItem.Name = "copyGeoTagToolStripMenuItem";
-            this.copyGeoTagToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
-            this.copyGeoTagToolStripMenuItem.Text = "Copy GeoTag";
-            // 
             // setGeoTagToolStripMenuItem
             // 
             this.setGeoTagToolStripMenuItem.Name = "setGeoTagToolStripMenuItem";
@@ -187,7 +189,7 @@ namespace FlickrMetadataSync
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.lstTags.ForeColor = System.Drawing.Color.DarkGray;
             this.lstTags.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
+            listViewItem4});
             this.lstTags.Location = new System.Drawing.Point(292, 159);
             this.lstTags.Name = "lstTags";
             this.lstTags.Size = new System.Drawing.Size(158, 112);
@@ -539,6 +541,18 @@ namespace FlickrMetadataSync
             this.btnReUpload.Text = "Re-Upload";
             this.btnReUpload.UseVisualStyleBackColor = true;
             // 
+            // axQTP
+            // 
+            this.axQTP.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.axQTP.Enabled = true;
+            this.axQTP.Location = new System.Drawing.Point(456, 162);
+            this.axQTP.Name = "axQTP";
+            this.axQTP.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axQTP.OcxState")));
+            this.axQTP.Size = new System.Drawing.Size(429, 167);
+            this.axQTP.TabIndex = 37;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -568,6 +582,7 @@ namespace FlickrMetadataSync
             this.Controls.Add(this.txtPictureCaption);
             this.Controls.Add(this.pictureList);
             this.Controls.Add(this.btnSetDateTakenForWholeSet);
+            this.Controls.Add(this.axQTP);
             this.MinimumSize = new System.Drawing.Size(901, 421);
             this.Name = "Main";
             this.Text = "Flickr Metadata Sync";
@@ -580,6 +595,7 @@ namespace FlickrMetadataSync
             ((System.ComponentModel.ISupportInitialize)(this.axWMP)).EndInit();
             this.pnlPictureBox.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.axQTP)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -637,6 +653,7 @@ namespace FlickrMetadataSync
         private ToolStripMenuItem sortSetsOnFlickrToolStripMenuItem;
         private ToolStripMenuItem copyGeoTagToolStripMenuItem;
         private ToolStripMenuItem setGeoTagToolStripMenuItem;
+        private AxQTOControlLib.AxQTControl axQTP;
     }
 }
 
