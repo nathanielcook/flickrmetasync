@@ -139,7 +139,7 @@ namespace FlickrMetadataSync
                 //if it's been more than 3 days since the last all tags scan
                 //begin reading tags in the background
                 //leave this as the last line in Main()
-                tagReader.RunWorkerAsync();
+                //tagReader.RunWorkerAsync();
             }
         }
 
@@ -191,10 +191,9 @@ namespace FlickrMetadataSync
 
         private string buildGPSClipboardText(double? latitude, double? longitude)
         {
-            string clipboardText;
-            clipboardText = Application.ProductName + "GPS" + "\r\n";
-            clipboardText = latitude.ToString() + "\r\n";
-            clipboardText = longitude.ToString();
+            string clipboardText = string.Empty;
+            //clipboardText = Application.ProductName + "GPS:" + "\r\n";
+            clipboardText += latitude.ToString() + ", " + longitude.ToString();
             return clipboardText;
         }
 
@@ -1090,15 +1089,16 @@ namespace FlickrMetadataSync
                 pictureList.Focus();
             }
 
-            lstAllTags.Clear();
+            lstAllTags.BeginUpdate();
 
+            lstAllTags.Clear();
             string text = txtTag.Text.Trim();
             foreach (string tag in allTags)
             {
                 if (tag.ToLower().StartsWith(text.ToLower()))
                     lstAllTags.Items.Add(tag, tag, 0);
             }
-
+            lstAllTags.EndUpdate();
         }
 
         void txtPictureCaption_KeyDown(object sender, KeyEventArgs e)
@@ -1534,7 +1534,7 @@ namespace FlickrMetadataSync
                     }
                 }
 
-                mergeLocalInUI(e.Item.Text);
+                //mergeLocalInUI(e.Item.Text);
             }
         }
 
@@ -1806,7 +1806,7 @@ namespace FlickrMetadataSync
                 {
                     flickrProgressBar.Style = ProgressBarStyle.Blocks;
 
-                    if ((currentSetName != selectedNodeName) || (!currentContent.flickrLoaded && currentContent.flickrID != null))
+                    if ((currentSetName != selectedNodeName) || (currentContent != null && !currentContent.flickrLoaded && currentContent.flickrID != null))
                     {
                         flickrGopher.RunWorkerAsync();
                     }
@@ -1828,7 +1828,7 @@ namespace FlickrMetadataSync
 
                 if (pictureList.SelectedItems.Count >= 1)
                 {
-                    if (pictureList.FocusedItem != null && pictureList.FocusedItem.Selected && !pictureList.FocusedItem.Text.ToLower().Equals(Path.GetFileName(currentContent.filename).ToLower()))
+                    if (pictureList.FocusedItem != null && pictureList.FocusedItem.Selected && (currentContent == null || !pictureList.FocusedItem.Text.ToLower().Equals(Path.GetFileName(currentContent.filename).ToLower())))
                     {
                         mergeLocalInUI(pictureList.FocusedItem.Text);
                     }
@@ -2898,7 +2898,7 @@ namespace FlickrMetadataSync
                     string photosetIDs2 = "";
                     for (int i = 0; i < photosets.PhotosetCollection.Length; i++)
                     {
-                        Debug.Print(photosetsOrdered[i].Title);
+                        //Debug.Print(photosetsOrdered[i].Title);
                         photosetIDs[i] = photosetsOrdered[i].PhotosetId;
                         photosetIDs2 += photosetsOrdered[i].PhotosetId + ",";
                     }
