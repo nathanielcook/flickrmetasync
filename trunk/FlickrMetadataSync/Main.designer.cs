@@ -46,7 +46,7 @@ namespace FlickrMetadataSync
             this.setDateTakenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setGeoTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lstTags = new System.Windows.Forms.ListView();
-            this.lblGeotag = new System.Windows.Forms.Label();
+            this.lnkGeotag = new System.Windows.Forms.LinkLabel();
             this.txtPictureCaption = new System.Windows.Forms.TextBox();
             this.tagReader = new System.ComponentModel.BackgroundWorker();
             this.tagReadingProgressBar = new System.Windows.Forms.ProgressBar();
@@ -199,13 +199,13 @@ namespace FlickrMetadataSync
             // 
             // lblGeotag
             // 
-            this.lblGeotag.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblGeotag.AutoSize = true;
-            this.lblGeotag.Location = new System.Drawing.Point(453, 371);
-            this.lblGeotag.Name = "lblGeotag";
-            this.lblGeotag.Size = new System.Drawing.Size(45, 13);
-            this.lblGeotag.TabIndex = 8;
-            this.lblGeotag.Text = "Geotag:";
+            this.lnkGeotag.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lnkGeotag.AutoSize = true;
+            this.lnkGeotag.Location = new System.Drawing.Point(453, 371);
+            this.lnkGeotag.Name = "lblGeotag";
+            this.lnkGeotag.Size = new System.Drawing.Size(45, 13);
+            this.lnkGeotag.TabIndex = 8;
+            this.lnkGeotag.Text = "Geotag:";
             // 
             // txtPictureCaption
             // 
@@ -578,7 +578,7 @@ namespace FlickrMetadataSync
             this.Controls.Add(this.calDateTaken);
             this.Controls.Add(this.lblDateTaken);
             this.Controls.Add(this.lstTags);
-            this.Controls.Add(this.lblGeotag);
+            this.Controls.Add(this.lnkGeotag);
             this.Controls.Add(this.txtPictureCaption);
             this.Controls.Add(this.pictureList);
             this.Controls.Add(this.btnSetDateTakenForWholeSet);
@@ -607,7 +607,7 @@ namespace FlickrMetadataSync
         private FolderBrowserDialog folderPicker;
         private ListView pictureList;
         private ListView lstTags;
-        private Label lblGeotag;
+        private LinkLabel lnkGeotag;
         private TextBox txtPictureCaption;
         private System.ComponentModel.BackgroundWorker tagReader;
         private ProgressBar tagReadingProgressBar;

@@ -269,7 +269,6 @@ namespace FlickrMetadataSync
             const uint _DegreesDenominator = 1000000;
             const double _SecondsRoundingFactor = 1000.0;
 
-            ulong[] oldStyleCoordinates = new ulong[3];
             ulong[] newStyleCoordinates = new ulong[3];
 
             // Make sure coordinate is positive.
@@ -285,16 +284,9 @@ namespace FlickrMetadataSync
 
             double seconds = Math.Round(coordinate * 3600.0 * _SecondsRoundingFactor) / _SecondsRoundingFactor;
 
-            oldStyleCoordinates[0] = Convert.ToUInt64(degrees + DEGREES_OFFSET);
-            oldStyleCoordinates[1] = Convert.ToUInt64(minutes + MINUTES_OFFSET);
-            oldStyleCoordinates[2] = Convert.ToUInt64((seconds * 100.0) + SECONDS_OFFSET);
-
             newStyleCoordinates[0] = EncodeExifCoordinatePart(degrees, 1);
             newStyleCoordinates[1] = EncodeExifCoordinatePart(minutes, 1);
             newStyleCoordinates[2] = EncodeExifCoordinatePart(seconds, _DegreesDenominator);
-
-            if (Math.Round(ConvertCoordinate(oldStyleCoordinates), 4, MidpointRounding.AwayFromZero) != Math.Round(ConvertCoordinate(newStyleCoordinates), 4, MidpointRounding.AwayFromZero))
-                throw new Exception("Possible GPS calculation error?");
 
             return newStyleCoordinates;
         }

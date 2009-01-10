@@ -87,7 +87,7 @@ namespace FlickrMetadataSync
             this.flickrGopher.DoWork += new DoWorkEventHandler(flickrGopher_DoWork);
             this.btnSetDateTaken.Click += new EventHandler(btnSetDateTaken_Click);
             this.btnSetDateTakenForWholeSet.Click += new EventHandler(btnSetDateTakenForWholeSet_Click);
-            this.lblGeotag.Click += new EventHandler(lblGeotag_Click);
+            this.lnkGeotag.Click += new EventHandler(lblGeotag_Click);
             this.lblFlickrDateTaken.Click += new EventHandler(lblFlickrDateTaken_Click);
             this.lstAllTags.KeyDown += new KeyEventHandler(lstAllTags_KeyDown);
             this.changeThisTagMenuItem.Click += new EventHandler(changeThisTagMenuItem_Click);
@@ -117,6 +117,7 @@ namespace FlickrMetadataSync
             this.sortSetsOnFlickrToolStripMenuItem.Click += new EventHandler(sortSetsOnFlickrToolStripMenuItem_Click);
             this.copyGeoTagToolStripMenuItem.Click += new EventHandler(copyGeoTagToolStripMenuItem_Click);
             this.setGeoTagToolStripMenuItem.Click += new EventHandler(setGeoTagToolStripMenuItem_Click);
+            this.lnkGeotag.LinkClicked += new LinkLabelLinkClickedEventHandler(lnkGeotag_LinkClicked);
 
             //get flickr authorization token
             loadAuthToken();
@@ -141,6 +142,17 @@ namespace FlickrMetadataSync
                 //leave this as the last line in Main()
                 //tagReader.RunWorkerAsync();
             }
+        }
+
+        void lnkGeotag_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            lnkGeotag.LinkVisited = true;
+            try
+            {
+                System.Diagnostics.Process.Start(lnkGeotag.Links[0].LinkData.ToString());
+            }
+            catch { }
+            pictureList.Focus();
         }
 
         void copyGeoTagToolStripMenuItem_Click(object sender, EventArgs e)
@@ -367,7 +379,7 @@ namespace FlickrMetadataSync
         private void renameSet()
         {
             axWMP.URL = null;
-            axQTP.URL = null;
+            axQTP.URL = string.Empty;
             string thisSetID = currentSetId;
             string oldSetName = setList.SelectedNode.Text;
             string newSetName = InputBox(string.Format("Enter the new name for the set (currently named {0}):", oldSetName), Application.ProductName, oldSetName);
@@ -776,18 +788,23 @@ namespace FlickrMetadataSync
             {
                 Picture currentPicture = ((Picture)currentContent);
 
-                if (MessageBox.Show("Update the local picture to use flickr's date taken?", Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                bool refresh = false;
+
+                if (MessageBox.Show(string.Format("Update the local picture's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use flickr's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.dateTaken.Value, currentPicture.flickrDateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     currentPicture.dateTaken = currentPicture.flickrDateTaken.Value;
                     currentPicture.Save();
+                    refresh = true;
                 }
-                else if (MessageBox.Show("Update flickr to use the local picture's date taken?", Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                else if (MessageBox.Show(string.Format("Update flickr's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use the local picture's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.flickrDateTaken.Value, currentPicture.dateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     currentPicture.flickrDateTaken = currentPicture.dateTaken.Value;
                     flickr.PhotosSetDates(currentPicture.flickrID, currentPicture.flickrDatePosted.Value, currentPicture.flickrDateTaken.Value, DateGranularity.FullDate);
+                    refresh = true;
                 }
 
-                mergeLocalInUI(pictureList.SelectedItems[0].Text);
+                if (refresh)
+                    mergeLocalInUI(pictureList.SelectedItems[0].Text);
             }
         }
 
@@ -797,7 +814,7 @@ namespace FlickrMetadataSync
             {
                 Picture currentPicture = ((Picture)currentContent);
 
-                if (lblGeotag.Text.IndexOf("CONFLICT") > -1)
+                if (lnkGeotag.Text.IndexOf("CONFLICT") > -1)
                 {
                     if (MessageBox.Show("Update the local picture to use flickr's GPS data?", Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
@@ -1562,8 +1579,10 @@ namespace FlickrMetadataSync
             calDateTaken.TitleBackColor = Color.LightGray;
             string geoTag = "Geotag: ";
             pictureBox.Tag = null;
-            lblGeotag.Text = geoTag;
-            lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Regular);
+            lnkGeotag.Text = geoTag;
+            lnkGeotag.Font = new Font(lnkGeotag.Font, FontStyle.Regular);
+            lnkGeotag.LinkVisited = false;
+            lnkGeotag.LinkArea = new LinkArea(0, 0);
             lblVisibility.Text = "";
 
             lnkPicture.Visible = false;
@@ -1589,7 +1608,7 @@ namespace FlickrMetadataSync
 
                 //load video
                 if (fullFilePath.ToUpper().EndsWith(".MOV"))
-                {                   
+                {
                     axQTP.URL = fullFilePath;
                     axQTP.Visible = true;
                     axWMP.Visible = false;
@@ -1676,7 +1695,7 @@ namespace FlickrMetadataSync
                     geoTag += "lat " + currentPicture.gpsLatitude.ToString() + ", ";
                 if (currentPicture.gpsLongitude.HasValue)
                     geoTag += "long " + currentPicture.gpsLongitude.ToString();
-                lblGeotag.Text = geoTag;
+                lnkGeotag.Text = geoTag;
             }
         }
 
@@ -1995,11 +2014,13 @@ namespace FlickrMetadataSync
                     if ((currentPicture.gpsLatitude.HasValue && currentPicture.flickrGpsLatitude.HasValue && (Math.Abs(Math.Round(currentPicture.gpsLatitude.Value, 1) - Math.Round(currentPicture.flickrGpsLatitude.Value, 1)) > 0.1)) ||
                     (currentPicture.gpsLongitude.HasValue && currentPicture.flickrGpsLongitude.HasValue && (Math.Abs(Math.Round(currentPicture.gpsLongitude.Value, 1) - Math.Round(currentPicture.flickrGpsLongitude.Value, 1)) > 0.1)))
                     {
-                        lblGeotag.Text += "  CONFLICT w/flickr " + currentPicture.flickrGpsLatitude.Value + ", " + currentPicture.flickrGpsLongitude.Value;
+                        lnkGeotag.Text += "  CONFLICT w/flickr " + currentPicture.flickrGpsLatitude.Value + ", " + currentPicture.flickrGpsLongitude.Value;
                     }
                     else
                     {
-                        lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
+                        lnkGeotag.Font = new Font(lnkGeotag.Font, FontStyle.Bold);
+                        string link = string.Format("http://maps.google.com/maps?q={0:F9},{1:F9}&ll={0:F9},{1:F9}&t=h&z=16", currentPicture.flickrGpsLatitude.Value, currentPicture.gpsLongitude.Value);
+                        lnkGeotag.Links.Add(8, link.Length, link);
                     }
                 }
                 else if (currentPicture.gpsLatitude.HasValue && currentPicture.gpsLongitude.HasValue)
@@ -2007,7 +2028,7 @@ namespace FlickrMetadataSync
                     currentPicture.flickrGpsLatitude = currentPicture.gpsLatitude;
                     currentPicture.flickrGpsLongitude = currentPicture.gpsLongitude;
                     flickr.PhotosGeoSetLocation(currentPicture.flickrID, currentPicture.flickrGpsLatitude.Value, currentPicture.flickrGpsLongitude.Value);
-                    lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
+                    lnkGeotag.Font = new Font(lnkGeotag.Font, FontStyle.Bold);
                 }
                 else if (currentPicture.flickrGpsLatitude.HasValue && currentPicture.flickrGpsLongitude.HasValue)
                 {
@@ -2091,7 +2112,7 @@ namespace FlickrMetadataSync
                 if (localUnsavedChanges)
                 {
                     currentPicture.Save();
-                    lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
+                    lnkGeotag.Font = new Font(lnkGeotag.Font, FontStyle.Bold);
                     saveAllTagsToDisk(allTags);
                     populateAllTagsListView();
                 }
@@ -2147,8 +2168,8 @@ namespace FlickrMetadataSync
                     geoTag += "lat " + currentContent.flickrGpsLatitude.ToString() + ", ";
                 if (currentContent.flickrGpsLongitude.HasValue)
                     geoTag += "long " + currentContent.flickrGpsLongitude.ToString();
-                lblGeotag.Text = geoTag;
-                lblGeotag.Font = new Font(lblGeotag.Font, FontStyle.Bold);
+                lnkGeotag.Text = geoTag;
+                lnkGeotag.Font = new Font(lnkGeotag.Font, FontStyle.Bold);
 
                 txtPictureCaption.Text = currentContent.flickrCaption;
 
