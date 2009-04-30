@@ -1149,7 +1149,9 @@ namespace FlickrMetadataSync
                     {
                         picture.caption = txtPictureCaption.Text.Trim();
                         picture.Save();
-                        flickr.PhotosSetMeta(picture.flickrID, picture.flickrTitle, picture.caption);
+
+                        if (picture.flickrID != null)
+                            flickr.PhotosSetMeta(picture.flickrID, picture.flickrTitle, picture.caption);
                     }
                 }
 
