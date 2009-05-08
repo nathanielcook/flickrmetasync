@@ -790,13 +790,14 @@ namespace FlickrMetadataSync
 
                 bool refresh = false;
 
-                if (MessageBox.Show(string.Format("Update the local picture's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use flickr's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.dateTaken.Value, currentPicture.flickrDateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if ((currentPicture.dateTaken == null && MessageBox.Show(string.Format("Update the local picture's date taken (which is null) to use flickr's date taken ({0:MM/dd/yy hh:mm:ss tt})?", currentPicture.flickrDateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                  || (currentPicture.dateTaken != null && MessageBox.Show(string.Format("Update the local picture's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use flickr's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.dateTaken.Value, currentPicture.flickrDateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes))
                 {
                     currentPicture.dateTaken = currentPicture.flickrDateTaken.Value;
                     currentPicture.Save();
                     refresh = true;
                 }
-                else if (MessageBox.Show(string.Format("Update flickr's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use the local picture's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.flickrDateTaken.Value, currentPicture.dateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                else if (currentPicture.dateTaken != null && MessageBox.Show(string.Format("Update flickr's date taken ({0:MM/dd/yy hh:mm:ss tt}) to use the local picture's date taken ({1:MM/dd/yy hh:mm:ss tt})?", currentPicture.flickrDateTaken.Value, currentPicture.dateTaken.Value), Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     currentPicture.flickrDateTaken = currentPicture.dateTaken.Value;
                     flickr.PhotosSetDates(currentPicture.flickrID, currentPicture.flickrDatePosted.Value, currentPicture.flickrDateTaken.Value, DateGranularity.FullDate);
