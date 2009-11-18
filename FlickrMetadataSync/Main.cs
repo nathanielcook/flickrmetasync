@@ -1963,7 +1963,7 @@ namespace FlickrMetadataSync
                 //caption
                 if (currentPicture.caption != null && currentPicture.flickrCaption != null)
                 {
-                    if (currentPicture.caption != currentPicture.flickrCaption)
+                    if (currentPicture.caption != System.Web.HttpUtility.HtmlDecode(currentPicture.flickrCaption))
                     {
                         txtPictureCaption.ForeColor = Color.Red;
                         toolTip1.SetToolTip(txtPictureCaption, currentPicture.flickrCaption);
